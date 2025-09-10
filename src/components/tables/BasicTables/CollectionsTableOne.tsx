@@ -17,17 +17,20 @@ interface Collection {
   collector_id: number;
   operator_gender: string;
   operator_type: string;
+  respondent_nature: string;
+  other_respondent_nature: string | null;
+  merchandise_owner_gender: string;
+  merchandise_owner_age_category: string;
+  merchandise_owner_has_disability: number;
   collection_point_id: number | null;
   collection_type: string;
   collection_context: string;
   transport_batch_id: number | null;
-  origin_city_id: number;
+  origin_city_id: number | null;
   origin_country_id: number;
-  origin_location?: string; // Ancien champ pour compatibilité
   intermediate_destination: string | null;
-  final_destination_city_id: number;
+  final_destination_city_id: number | null;
   destination_country_id: number;
-  final_destination?: string; // Ancien champ pour compatibilité
   trade_flow_direction: string;
   transport_mode_id: number;
   vehicle_registration_number: string;
@@ -36,7 +39,7 @@ interface Collection {
   nearby_markets: string | null;
   currency_id: number;
   payment_method: string;
-  season_id: number;
+  season_id: number | null;
   market_condition: string | null;
   market_price_variation: string | null;
   taxes_fees: string | null;
@@ -48,43 +51,44 @@ interface Collection {
   control_locations: string | null;
   control_duration_type: string | null;
   control_duration_value: string | null;
-  taxes_paid: number;
-  total_weight_kg: number;
-  tax_amount: number;
-  illegal_fees_paid: number;
+  taxes_paid: string | null;
+  total_weight_kg: string | null;
+  tax_amount: string | null;
+  illegal_fees_paid: string | null;
   illegal_fees_locations: string | null;
   illegal_fees_amount: string | null;
   knows_community_regulations: number | null;
   knows_national_regulations: number | null;
   other_difficulties: string | null;
   notes: string | null;
+  corridor_id: number;
   status: string;
+  validated_at: string | null;
   validated_by: number | null;
   created_at: string;
   updated_at: string;
-  originCity: {
+  // Nouvelles relations
+  collectionPoint?: {
     id: number;
     public_id: string;
     name: string;
+    description: string;
     country_id: number;
-    location: string | null;
+    corridor_id: number | null;
+    collection_point_type_id: number;
+    locality: string;
+    region: string;
+    coordinates: string | null;
+    is_formal: boolean;
+    is_border_crossing: boolean;
+    is_market: boolean;
+    is_fluvial: boolean;
+    is_checkpoint: boolean;
+    status: string;
     created_at: string;
     updated_at: string;
-    country: {
-      id: number;
-      public_id: string;
-      name: string;
-      iso: string;
-      prefix: string;
-      flag: string;
-      currency_id: number;
-      status: string;
-      metadata: any;
-      created_at: string;
-      updated_at: string;
-    };
   };
-  originCountry: {
+  originCountry?: {
     id: number;
     public_id: string;
     name: string;
@@ -97,29 +101,7 @@ interface Collection {
     created_at: string;
     updated_at: string;
   };
-  finalDestinationCity: {
-    id: number;
-    public_id: string;
-    name: string;
-    country_id: number;
-    location: string | null;
-    created_at: string;
-    updated_at: string;
-    country: {
-      id: number;
-      public_id: string;
-      name: string;
-      iso: string;
-      prefix: string;
-      flag: string;
-      currency_id: number;
-      status: string;
-      metadata: any;
-      created_at: string;
-      updated_at: string;
-    };
-  };
-  destinationCountry: {
+  destinationCountry?: {
     id: number;
     public_id: string;
     name: string;
@@ -132,34 +114,34 @@ interface Collection {
     created_at: string;
     updated_at: string;
   };
-  collector: {
+  transportMode?: {
     id: number;
     public_id: string;
-    user_id: number;
-    organization_id: number;
-    team_manager_id: number;
-    supervisor_id: number | null;
-    country_id: number;
-    last_name: string;
-    first_name: string;
-    phone: string;
-    email: string;
-    gender: string;
-    address: string;
-    marital_status: string;
-    status: string;
-    date_of_birth: string;
-    place_of_birth: string;
-    nationality: string;
-    actor_role: string;
+    name: string;
+    description: string;
+    transport_method_id: number;
     created_at: string;
     updated_at: string;
   };
-  collectionItems: Array<{
+  corridor?: {
+    id: number;
+    public_id: string;
+    name: string;
+    description: string;
+    country_start_id: number;
+    country_end_id: number;
+    city_start_id: number;
+    city_end_id: number;
+    distance: number;
+    nbre_checkpoints: number;
+    created_at: string;
+    updated_at: string;
+  };
+  collectionItems?: Array<{
     id: number;
     public_id: string;
     collection_id: number;
-    product_id: number | null;
+    product_id: number;
     animal_id: number | null;
     quantity: string;
     unity_id: number;
@@ -170,54 +152,153 @@ interface Collection {
     product_processing_level: string | null;
     product_packaging: string | null;
     animal_count: number | null;
+    animal_categories: string | null;
     animal_age_category: string | null;
     animal_gender: string | null;
     animal_condition: string | null;
     animal_breed: string | null;
-    average_weight_kg: string | null;
-    specific_origin: string;
-    specific_destination: string;
-    losses_quantity: string;
-    losses_value: string;
+    average_weight_kg: string;
+    specific_origin: string | null;
+    specific_destination: string | null;
+    losses_quantity: string | null;
+    losses_value: string | null;
     loss_reasons: string | null;
-    required_special_permits: number;
+    required_special_permits: number | null;
     special_permits_details: string | null;
-    item_specific_fees: string;
-    is_seasonal_product: number;
+    item_specific_fees: string | null;
+    is_seasonal_product: number | null;
     harvest_period: string | null;
     item_notes: string | null;
+    local_unit_weight_kg: string;
+    total_weight_kg: string;
+    loading_cost: string;
+    unloading_cost: string;
+    transport_cost: string;
+    origin_country_id: number;
+    loading_city_id: number;
+    unloading_city_id: number;
+    product_origin_country_id: number | null;
+    customs_registration_number: string | null;
+    is_customs_registered: number;
     created_at: string;
     updated_at: string;
+    product: {
+      id: number;
+      public_id: string;
+      name: string;
+      product_type_id: number;
+      HS_code: string;
+      description: string;
+      created_at: string;
+      updated_at: string;
+    };
+    animal: any | null;
+    unity: {
+      id: number;
+      public_id: string;
+      name: string;
+      description: string;
+      symbol: string;
+      created_at: string;
+      updated_at: string;
+    };
+    originCountry: {
+      id: number;
+      public_id: string;
+      name: string;
+      iso: string;
+      prefix: string;
+      flag: string;
+      currency_id: number;
+      status: string;
+      metadata: any;
+      created_at: string;
+      updated_at: string;
+    };
+    loadingCity: {
+      id: number;
+      public_id: string;
+      name: string;
+      country_id: number;
+      location: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    unloadingCity: {
+      id: number;
+      public_id: string;
+      name: string;
+      country_id: number;
+      location: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    productOriginCountry: any | null;
   }>;
-  collectionControls: Array<{
+  collectionControls?: Array<{
     id: number;
     collection_id: number;
     checkpoint_id: number | null;
     service_id: number;
     location: string;
-    fees_paid: string;
-    payment_amount: string;
-    duration_type: string;
-    control_duration: string;
-    control_result: string;
+    fees_paid: string | null;
+    payment_amount: string | null;
+    duration_type: string | null;
+    control_duration: string | null;
+    control_result: string | null;
     control_issues: string | null;
     notes: string | null;
+    other_control_body: string;
+    control_posts_count: number;
+    stop_time_per_post_type: string | null;
+    border_crossing_time_type: string | null;
+    fees_paid_yes_no: number;
+    has_receipt: number;
+    tax_type_id: number;
+    other_tax_type: string;
+    fees_payment_post: string | null;
+    fees_payment_amount: string | null;
+    illegal_fees_paid: number;
+    illegal_fees_post: string | null;
+    illegal_fees_amount: string | null;
+    knows_community_regulations: number;
+    knows_national_regulations: number;
+    other_difficulties: string | null;
     created_at: string;
     updated_at: string;
+    taxType: {
+      id: number;
+      name: string;
+      description: string;
+      created_at: string;
+      updated_at: string;
+    };
   }>;
+  // Champs de validation
   validated_by_team_manager?: boolean;
   validation_result?: string | null;
   validation_action?: string | null;
   validation_notes?: string | null;
   data_quality_score?: number | null;
-  validated_at?: string | null;
   rejection_reason?: string | null;
   validated_by_supervisor?: boolean;
   supervisor_validation_result?: string | null;
   supervisor_validated_at?: string | null;
+  // Champs calculés
   total_value?: string;
   collector_name?: string;
   total_items?: number;
+  // Champs de compatibilité pour l'ancienne structure
+  collector?: {
+    first_name: string;
+    last_name: string;
+  };
+  originCity?: {
+    name: string;
+  };
+  finalDestinationCity?: {
+    name: string;
+  };
 }
 
 // Interface pour la structure de validation du superviseur
@@ -273,6 +354,11 @@ const CollectionsTableOne = () => {
   const { userInfo } = useAuth();
 
   useEffect(() => {
+    console.log("=== USEEFFECT TRIGGERED ===");
+    console.log("currentPage:", currentPage);
+    console.log("rowsPerPage:", rowsPerPage);
+    console.log("=== FIN USEEFFECT DEBUG ===");
+
     const fetchData = async () => {
       try {
         setIsLoading(true);
@@ -579,15 +665,21 @@ const CollectionsTableOne = () => {
 
           const transformedData: Collection[] = collections.map((item) => ({
             ...item,
-            collector_name: `${item.collector.first_name} ${item.collector.last_name}`,
-            total_items: item.collectionItems.length,
+            collector_name:
+              item.collector_name ||
+              (item.collector
+                ? `${item.collector.first_name} ${item.collector.last_name}`
+                : "Non spécifié"),
+            total_items: item.collectionItems ? item.collectionItems.length : 0,
             total_value: item.collectionItems
-              .reduce(
-                (sum: number, item) =>
-                  sum + parseFloat(item.total_value || "0"),
-                0
-              )
-              .toFixed(2),
+              ? item.collectionItems
+                  .reduce(
+                    (sum: number, item) =>
+                      sum + parseFloat(item.total_value || "0"),
+                    0
+                  )
+                  .toFixed(2)
+              : "0.00",
           }));
 
           setTableData(transformedData);
@@ -651,8 +743,17 @@ const CollectionsTableOne = () => {
   };
 
   const onPageChange = (event: any) => {
+    console.log("=== PAGINATION DEBUG ===");
+    console.log("Event reçu:", event);
+    console.log("Nouvelle page:", event.page + 1);
+    console.log("Nouveau nombre de lignes:", event.rows);
+    console.log("Page actuelle avant changement:", currentPage);
+    console.log("Lignes par page avant changement:", rowsPerPage);
+
     setCurrentPage(event.page + 1);
     setRowsPerPage(event.rows);
+
+    console.log("=== FIN DEBUG PAGINATION ===");
   };
 
   const { t, i18n } = useTranslation();
@@ -673,10 +774,20 @@ const CollectionsTableOne = () => {
   };
 
   const collectorBodyTemplate = (rowData: Collection) => {
-    const firstName = rowData.collector?.first_name || "";
-    const lastName = rowData.collector?.last_name || "";
-    const fullName = `${firstName} ${lastName}`.trim();
-    return fullName || "Non spécifié";
+    // Utiliser le nom du collecteur s'il est disponible
+    if (rowData.collector_name) {
+      return rowData.collector_name;
+    }
+
+    // Fallback sur l'ancienne structure si disponible
+    if (rowData.collector) {
+      const firstName = rowData.collector.first_name || "";
+      const lastName = rowData.collector.last_name || "";
+      const fullName = `${firstName} ${lastName}`.trim();
+      return fullName || "Non spécifié";
+    }
+
+    return "Non spécifié";
   };
 
   const dateBodyTemplate = (rowData: Collection) => {
@@ -805,22 +916,23 @@ const CollectionsTableOne = () => {
   };
 
   const originBodyTemplate = (rowData: Collection) => {
-    // Essayer d'abord les nouvelles données structurées
-    let cityName = rowData.originCity?.name;
-    let countryName = rowData.originCountry?.name;
-    let countryFlag = rowData.originCountry?.flag;
+    // Utiliser les nouvelles données structurées
+    let cityName = "Non spécifié";
+    let countryName = rowData.originCountry?.name || "Non spécifié";
+    let countryFlag = rowData.originCountry?.flag || "";
+
+    // Essayer de récupérer le nom de la ville depuis les collectionItems
+    if (rowData.collectionItems && rowData.collectionItems.length > 0) {
+      const firstItem = rowData.collectionItems[0];
+      if (firstItem.loadingCity?.name) {
+        cityName = firstItem.loadingCity.name;
+      }
+    }
 
     // Fallback sur les anciens champs si les nouveaux ne sont pas disponibles
-    if (!cityName && rowData.origin_location) {
-      cityName = rowData.origin_location;
+    if (cityName === "Non spécifié" && rowData.origin_city_id) {
+      cityName = `Ville ID: ${rowData.origin_city_id}`;
     }
-    if (!countryName && rowData.origin_country_id) {
-      countryName = `Pays ID: ${rowData.origin_country_id}`;
-    }
-
-    cityName = cityName || "Non spécifié";
-    countryName = countryName || "Non spécifié";
-    countryFlag = countryFlag || "";
 
     return (
       <div className="text-sm">
@@ -832,22 +944,23 @@ const CollectionsTableOne = () => {
   };
 
   const destinationBodyTemplate = (rowData: Collection) => {
-    // Essayer d'abord les nouvelles données structurées
-    let cityName = rowData.finalDestinationCity?.name;
-    let countryName = rowData.destinationCountry?.name;
-    let countryFlag = rowData.destinationCountry?.flag;
+    // Utiliser les nouvelles données structurées
+    let cityName = "Non spécifié";
+    let countryName = rowData.destinationCountry?.name || "Non spécifié";
+    let countryFlag = rowData.destinationCountry?.flag || "";
+
+    // Essayer de récupérer le nom de la ville depuis les collectionItems
+    if (rowData.collectionItems && rowData.collectionItems.length > 0) {
+      const firstItem = rowData.collectionItems[0];
+      if (firstItem.unloadingCity?.name) {
+        cityName = firstItem.unloadingCity.name;
+      }
+    }
 
     // Fallback sur les anciens champs si les nouveaux ne sont pas disponibles
-    if (!cityName && rowData.final_destination) {
-      cityName = rowData.final_destination;
+    if (cityName === "Non spécifié" && rowData.final_destination_city_id) {
+      cityName = `Ville ID: ${rowData.final_destination_city_id}`;
     }
-    if (!countryName && rowData.destination_country_id) {
-      countryName = `Pays ID: ${rowData.destination_country_id}`;
-    }
-
-    cityName = cityName || "Non spécifié";
-    countryName = countryName || "Non spécifié";
-    countryFlag = countryFlag || "";
 
     return (
       <div className="text-sm">
@@ -859,7 +972,18 @@ const CollectionsTableOne = () => {
   };
 
   const totalValueBodyTemplate = (rowData: Collection) => {
-    const totalValue = parseFloat(rowData.total_value || "0");
+    let totalValue = 0;
+
+    // Calculer la valeur totale à partir des collectionItems
+    if (rowData.collectionItems && rowData.collectionItems.length > 0) {
+      totalValue = rowData.collectionItems.reduce((sum, item) => {
+        return sum + parseFloat(item.total_value || "0");
+      }, 0);
+    } else if (rowData.total_value) {
+      // Fallback sur l'ancien champ si disponible
+      totalValue = parseFloat(rowData.total_value);
+    }
+
     const formattedValue = totalValue.toLocaleString("fr-FR", {
       style: "currency",
       currency: "XOF",
@@ -894,6 +1018,15 @@ const CollectionsTableOne = () => {
     );
   }
 
+  // Debug pour la pagination
+  console.log("=== RENDER DEBUG ===");
+  console.log("tableData.length:", tableData.length);
+  console.log("totalRecords:", totalRecords);
+  console.log("currentPage:", currentPage);
+  console.log("rowsPerPage:", rowsPerPage);
+  console.log("first:", (currentPage - 1) * rowsPerPage);
+  console.log("=== FIN RENDER DEBUG ===");
+
   return (
     <div className="p-4">
       <ComponentCard title={t("agent_collections")}>
@@ -912,6 +1045,11 @@ const CollectionsTableOne = () => {
             "collection_type",
             "status",
             "total_value",
+            "originCountry.name",
+            "destinationCountry.name",
+            "collectionPoint.name",
+            "transportMode.name",
+            "corridor.name",
             ...(userInfo?.role_id === 5
               ? ["validation_notes", "data_quality_score"]
               : []),
@@ -921,6 +1059,7 @@ const CollectionsTableOne = () => {
           rowsPerPageOptions={[5, 10, 25]}
           tableStyle={{ minWidth: "50rem" }}
           className="p-datatable-sm"
+          lazy={true}
         >
           <Column
             field="collector_name"

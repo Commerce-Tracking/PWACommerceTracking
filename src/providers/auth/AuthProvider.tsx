@@ -1,40 +1,95 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "../../api/axios.ts";
 import AuthContext from "../../context/AuthContext.tsx";
 import axiosInstance from "../../api/axios.ts";
 import { Link, useNavigate } from "react-router";
 
 export default function AuthProvider({ children }) {
-  let [accessToken, setAccessToken] = useState(null);
-  let [refreshToken, setRefreshToken] = useState(null);
-  let [userInfo, setUserInfo] = useState(null);
-  let [userData, setUserData] = useState(null);
+  let [accessToken, setAccessToken] = useState<string | null>(null);
+  let [refreshToken, setRefreshToken] = useState<string | null>(null);
+  let [userInfo, setUserInfo] = useState<any | null>(null);
+  let [userData, setUserData] = useState<any | null>(null);
   let [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
 
+  // Fonction pour vérifier la validité du token
+  const checkTokenValidity = useCallback(async (token: string) => {
+    try {
+      const response = await axiosInstance.get("/api/auth/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.status === 200;
+    } catch (error) {
+      console.log("Token invalide ou expiré");
+      return false;
+    }
+  }, []);
+
+  // Fonction pour nettoyer les données de session
+  const clearSession = useCallback(() => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userInfo");
+    localStorage.removeItem("userData");
+    setUserInfo(null);
+    setUserData(null);
+    setAccessToken(null);
+    setRefreshToken(null);
+  }, []);
+
   useEffect(() => {
-    const initAuth = () => {
+    const initAuth = async () => {
       const storedUser = localStorage.getItem("userInfo");
       const storedUserData = localStorage.getItem("userData");
       const storedAccessToken = localStorage.getItem("accessToken");
       const storedRefreshToken = localStorage.getItem("refreshToken");
 
-      if (storedUser) {
+      if (storedUser && storedAccessToken) {
         try {
           const parsedUser = JSON.parse(storedUser);
-          setUserInfo(parsedUser);
-          // @ts-ignore
-          const parsedUserData = JSON.parse(storedUserData);
-          setUserData(parsedUserData);
-          // @ts-ignore
-          setAccessToken(storedAccessToken);
-          // @ts-ignore
-          setRefreshToken(storedRefreshToken);
+
+          // Vérifier la validité du token
+          const isTokenValid = await checkTokenValidity(storedAccessToken);
+
+          if (isTokenValid) {
+            setUserInfo(parsedUser);
+            setAccessToken(storedAccessToken);
+            setRefreshToken(storedRefreshToken);
+
+            // Charger les données de profil depuis l'API
+            try {
+              const profileResponse = await axiosInstance.get(
+                "/api/auth/profile",
+                {
+                  headers: {
+                    Authorization: `Bearer ${storedAccessToken}`,
+                  },
+                }
+              );
+              const profileData = profileResponse.data.result;
+              setUserData(profileData);
+              localStorage.setItem("userData", JSON.stringify(profileData));
+              console.log("Profil chargé avec succès");
+            } catch (error) {
+              console.error("Erreur lors du chargement du profil:", error);
+              // Fallback sur les données stockées si disponibles
+              if (storedUserData) {
+                const parsedUserData = JSON.parse(storedUserData);
+                setUserData(parsedUserData);
+              }
+            }
+
+            console.log("Session restaurée avec succès");
+          } else {
+            console.log("Token expiré, nettoyage de la session");
+            clearSession();
+          }
         } catch (e) {
-          console.error("Impossible de parser userInfo");
-          localStorage.removeItem("userInfo");
-          localStorage.removeItem("userData");
+          console.error("Impossible de parser userInfo", e);
+          clearSession();
         }
       }
 
@@ -42,11 +97,32 @@ export default function AuthProvider({ children }) {
     };
 
     initAuth();
-  }, []);
+  }, [checkTokenValidity, clearSession]);
+
+  // Vérification périodique de la validité du token (toutes les 30 minutes)
+  useEffect(() => {
+    if (!accessToken) return;
+
+    const interval = setInterval(async () => {
+      const currentToken = localStorage.getItem("accessToken");
+      if (currentToken) {
+        const isTokenValid = await checkTokenValidity(currentToken);
+        if (!isTokenValid) {
+          console.log("Token expiré lors de la vérification périodique");
+          clearSession();
+        }
+      }
+    }, 24 * 60 * 60 * 1000); // 24 heures
+
+    return () => clearInterval(interval);
+  }, [accessToken, checkTokenValidity, clearSession]);
 
   const login = async (phone, password, navigate) => {
     try {
-      const res = await axiosInstance.post("/api/auth/login", { username:phone, password });
+      const res = await axiosInstance.post("/api/auth/login", {
+        username: phone,
+        password,
+      });
       console.log("LOGIN DATA: ");
       console.log(res.data);
 
@@ -79,6 +155,24 @@ export default function AuthProvider({ children }) {
         localStorage.setItem("refreshToken", tokens.refreshToken);
         localStorage.setItem("userInfo", JSON.stringify(user));
 
+        // Charger les données de profil après la connexion
+        try {
+          const profileResponse = await axiosInstance.get("/api/auth/profile", {
+            headers: {
+              Authorization: `Bearer ${tokens.accessToken}`,
+            },
+          });
+          const profileData = profileResponse.data.result;
+          setUserData(profileData);
+          localStorage.setItem("userData", JSON.stringify(profileData));
+          console.log("Profil chargé après connexion");
+        } catch (error) {
+          console.error(
+            "Erreur lors du chargement du profil après connexion:",
+            error
+          );
+        }
+
         console.log("Connexion réussie !");
         console.log("Rôle utilisateur:", user.role?.name || `ID: ${roleId}`);
       } else {
@@ -99,23 +193,22 @@ export default function AuthProvider({ children }) {
   const authMe = async (id: any) => {
     try {
       console.log("Access Token", accessToken);
-      const user = await axiosInstance.get(`/auth/me`, {
+      const user = await axiosInstance.get(`/api/auth/profile`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
         withCredentials: false,
       });
-      const u = user.data.data;
+      const u = user.data.result; // Utiliser result au lieu de data
       setUserData(u);
       localStorage.setItem("userData", JSON.stringify(u));
 
-      console.log("Connecté !");
+      console.log("Profil récupéré avec succès !");
     } catch (error) {
       // @ts-ignore
       console.error("Error", error.response?.data || error.message);
       // @ts-ignore
       if (error.response?.status === 401) {
-        
         navigate("/signin");
       }
     }
@@ -135,12 +228,10 @@ export default function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("userInfo"); // 👈 aussi
-    setUserInfo(null);
-  };
+  const logout = useCallback(() => {
+    clearSession();
+    console.log("Déconnexion effectuée");
+  }, [clearSession]);
 
   const refresh = async () => {
     try {

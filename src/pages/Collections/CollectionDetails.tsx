@@ -18,14 +18,19 @@ interface Collection {
   collector_id: number;
   operator_gender: string;
   operator_type: string;
+  respondent_nature: string;
+  other_respondent_nature: string | null;
+  merchandise_owner_gender: string;
+  merchandise_owner_age_category: string;
+  merchandise_owner_has_disability: number;
   collection_point_id: number | null;
   collection_type: string;
   collection_context: string;
   transport_batch_id: number | null;
-  origin_city_id: number;
+  origin_city_id: number | null;
   origin_country_id: number;
   intermediate_destination: string | null;
-  final_destination_city_id: number;
+  final_destination_city_id: number | null;
   destination_country_id: number;
   trade_flow_direction: string;
   transport_mode_id: number;
@@ -35,7 +40,7 @@ interface Collection {
   nearby_markets: string | null;
   currency_id: number;
   payment_method: string;
-  season_id: number;
+  season_id: number | null;
   market_condition: string | null;
   market_price_variation: string | null;
   taxes_fees: string | null;
@@ -47,50 +52,44 @@ interface Collection {
   control_locations: string | null;
   control_duration_type: string | null;
   control_duration_value: string | null;
-  taxes_paid: number;
-  total_weight_kg: number;
-  tax_amount: number;
-  illegal_fees_paid: number;
+  taxes_paid: string | null;
+  total_weight_kg: string | null;
+  tax_amount: string | null;
+  illegal_fees_paid: string | null;
   illegal_fees_locations: string | null;
   illegal_fees_amount: string | null;
   knows_community_regulations: number | null;
   knows_national_regulations: number | null;
   other_difficulties: string | null;
   notes: string | null;
+  corridor_id: number;
   status: string;
   validated_at: string | null;
   validated_by: number | null;
-  validated_by_team_manager: boolean;
-  validation_result: string | null;
-  validated_by_supervisor?: boolean;
-  supervisor_validation_result?: string | null;
-  supervisor_validated_at?: string | null;
   created_at: string;
   updated_at: string;
-  collectionPoint: any | null;
-  originCity: {
+  // Nouvelles relations
+  collectionPoint?: {
     id: number;
     public_id: string;
     name: string;
+    description: string;
     country_id: number;
-    location: string | null;
+    corridor_id: number | null;
+    collection_point_type_id: number;
+    locality: string;
+    region: string;
+    coordinates: string | null;
+    is_formal: boolean;
+    is_border_crossing: boolean;
+    is_market: boolean;
+    is_fluvial: boolean;
+    is_checkpoint: boolean;
+    status: string;
     created_at: string;
     updated_at: string;
-    country: {
-      id: number;
-      public_id: string;
-      name: string;
-      iso: string;
-      prefix: string;
-      flag: string;
-      currency_id: number;
-      status: string;
-      metadata: any;
-      created_at: string;
-      updated_at: string;
-    };
   };
-  originCountry: {
+  originCountry?: {
     id: number;
     public_id: string;
     name: string;
@@ -103,29 +102,7 @@ interface Collection {
     created_at: string;
     updated_at: string;
   };
-  finalDestinationCity: {
-    id: number;
-    public_id: string;
-    name: string;
-    country_id: number;
-    location: string | null;
-    created_at: string;
-    updated_at: string;
-    country: {
-      id: number;
-      public_id: string;
-      name: string;
-      iso: string;
-      prefix: string;
-      flag: string;
-      currency_id: number;
-      status: string;
-      metadata: any;
-      created_at: string;
-      updated_at: string;
-    };
-  };
-  destinationCountry: {
+  destinationCountry?: {
     id: number;
     public_id: string;
     name: string;
@@ -138,7 +115,7 @@ interface Collection {
     created_at: string;
     updated_at: string;
   };
-  transportMode: {
+  transportMode?: {
     id: number;
     public_id: string;
     name: string;
@@ -147,54 +124,25 @@ interface Collection {
     created_at: string;
     updated_at: string;
   };
-  currency: {
-    id: number;
-    name: string;
-    code: string;
-    symbol: string;
-    flag: string | null;
-    status: string;
-    created_at: string;
-    updated_at: string;
-  };
-  season: {
+  corridor?: {
     id: number;
     public_id: string;
     name: string;
     description: string;
-    type: string;
+    country_start_id: number;
+    country_end_id: number;
+    city_start_id: number;
+    city_end_id: number;
+    distance: number;
+    nbre_checkpoints: number;
     created_at: string;
     updated_at: string;
   };
-  validatedBy: any | null;
-  collector: {
-    id: number;
-    public_id: string;
-    user_id: number;
-    organization_id: number;
-    team_manager_id: number;
-    supervisor_id: number | null;
-    country_id: number;
-    last_name: string;
-    first_name: string;
-    phone: string;
-    email: string;
-    gender: string;
-    address: string;
-    marital_status: string;
-    status: string;
-    date_of_birth: string;
-    place_of_birth: string;
-    nationality: string;
-    actor_role: string;
-    created_at: string;
-    updated_at: string;
-  };
-  collectionItems: Array<{
+  collectionItems?: Array<{
     id: number;
     public_id: string;
     collection_id: number;
-    product_id: number | null;
+    product_id: number;
     animal_id: number | null;
     quantity: string;
     unity_id: number;
@@ -205,70 +153,185 @@ interface Collection {
     product_processing_level: string | null;
     product_packaging: string | null;
     animal_count: number | null;
+    animal_categories: string | null;
     animal_age_category: string | null;
     animal_gender: string | null;
     animal_condition: string | null;
     animal_breed: string | null;
-    average_weight_kg: string | null;
-    specific_origin: string;
-    specific_destination: string;
-    losses_quantity: string;
-    losses_value: string;
+    average_weight_kg: string;
+    specific_origin: string | null;
+    specific_destination: string | null;
+    losses_quantity: string | null;
+    losses_value: string | null;
     loss_reasons: string | null;
-    required_special_permits: number;
+    required_special_permits: number | null;
     special_permits_details: string | null;
-    item_specific_fees: string;
-    is_seasonal_product: number;
+    item_specific_fees: string | null;
+    is_seasonal_product: number | null;
     harvest_period: string | null;
     item_notes: string | null;
+    local_unit_weight_kg: string;
+    total_weight_kg: string;
+    loading_cost: string;
+    unloading_cost: string;
+    transport_cost: string;
+    origin_country_id: number;
+    loading_city_id: number;
+    unloading_city_id: number;
+    product_origin_country_id: number | null;
+    customs_registration_number: string | null;
+    is_customs_registered: number;
     created_at: string;
     updated_at: string;
+    product: {
+      id: number;
+      public_id: string;
+      name: string;
+      product_type_id: number;
+      HS_code: string;
+      description: string;
+      created_at: string;
+      updated_at: string;
+    };
+    animal: any | null;
+    unity: {
+      id: number;
+      public_id: string;
+      name: string;
+      description: string;
+      symbol: string;
+      created_at: string;
+      updated_at: string;
+    };
+    originCountry: {
+      id: number;
+      public_id: string;
+      name: string;
+      iso: string;
+      prefix: string;
+      flag: string;
+      currency_id: number;
+      status: string;
+      metadata: any;
+      created_at: string;
+      updated_at: string;
+    };
+    loadingCity: {
+      id: number;
+      public_id: string;
+      name: string;
+      country_id: number;
+      location: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    unloadingCity: {
+      id: number;
+      public_id: string;
+      name: string;
+      country_id: number;
+      location: string | null;
+      created_at: string;
+      updated_at: string;
+    };
+    productOriginCountry: any | null;
   }>;
-  collectionControls: Array<{
+  collectionControls?: Array<{
     id: number;
     collection_id: number;
     checkpoint_id: number | null;
     service_id: number;
     location: string;
-    fees_paid: string;
-    payment_amount: string;
-    duration_type: string;
-    control_duration: string;
-    control_result: string;
+    fees_paid: string | null;
+    payment_amount: string | null;
+    duration_type: string | null;
+    control_duration: string | null;
+    control_result: string | null;
     control_issues: string | null;
     notes: string | null;
+    other_control_body: string;
+    control_posts_count: number;
+    stop_time_per_post_type: string | null;
+    border_crossing_time_type: string | null;
+    fees_paid_yes_no: number;
+    has_receipt: number;
+    tax_type_id: number;
+    other_tax_type: string;
+    fees_payment_post: string | null;
+    fees_payment_amount: string | null;
+    illegal_fees_paid: number;
+    illegal_fees_post: string | null;
+    illegal_fees_amount: string | null;
+    knows_community_regulations: number;
+    knows_national_regulations: number;
+    other_difficulties: string | null;
     created_at: string;
     updated_at: string;
+    taxType: {
+      id: number;
+      name: string;
+      description: string;
+      created_at: string;
+      updated_at: string;
+    };
   }>;
-  collectionValidations: Array<{
+  // Champs de validation
+  validated_by_team_manager?: boolean;
+  validation_result?: string | null;
+  validation_action?: string | null;
+  validation_notes?: string | null;
+  data_quality_score?: number | null;
+  rejection_reason?: string | null;
+  validated_by_supervisor?: boolean;
+  supervisor_validation_result?: string | null;
+  supervisor_validated_at?: string | null;
+  // Champs calculés
+  total_value?: string;
+  collector_name?: string;
+  total_items?: number;
+  // Champs de compatibilité pour l'ancienne structure
+  collector?: {
+    first_name: string;
+    last_name: string;
+    phone: string;
+    email: string;
+    gender: string;
+    address: string;
+    marital_status: string;
+    status: string;
+    date_of_birth: string;
+    place_of_birth: string;
+    nationality: string;
+    actor_role: string;
+  };
+  originCity?: {
+    name: string;
+  };
+  finalDestinationCity?: {
+    name: string;
+  };
+  currency?: {
+    name: string;
+    code: string;
+    symbol: string;
+  };
+  season?: {
+    name: string;
+  };
+  collectionValidations?: Array<{
     id: number;
-    public_id: string;
-    collection_id: number;
     validation_level: string;
-    validator_id: number;
     validation_action: string;
     validation_result: string;
     data_quality_score: number | null;
     validation_notes: string | null;
     rejection_reason: string | null;
-    correction_instructions: string | null;
-    quality_issues: any;
-    validation_metadata: any;
-    requires_field_verification: boolean | null;
-    requires_data_correction: boolean | null;
-    requires_additional_documentation: boolean | null;
-    validation_deadline: string | null;
-    priority_level: string;
-    submitted_at: string;
     validated_at: string | null;
-    validation_duration_minutes: number | null;
-    previous_validation_id: number | null;
-    is_current_validation: number;
-    revision_number: number;
-    validation_source: string;
-    system_metadata: any;
-    created_at: string;
-    updated_at: string;
+    priority_level?: string;
+    submitted_at?: string;
+    correction_instructions?: string | null;
+    revision_number?: number;
+    is_current_validation?: number;
   }>;
 }
 
@@ -1292,9 +1355,9 @@ const CollectionDetails = () => {
                 Collecte
               </h3>
               <div className="space-y-2">
-                {/* <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">ID :</span> {collection.id}
-                </p> */}
+                </p>
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Public ID :</span>{" "}
                   {collection.public_id}
@@ -1306,6 +1369,36 @@ const CollectionDetails = () => {
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Contexte :</span>{" "}
                   {collection.collection_context}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Genre de l'opérateur :</span>{" "}
+                  {collection.operator_gender}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Type d'opérateur :</span>{" "}
+                  {collection.operator_type}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Nature du répondant :</span>{" "}
+                  {collection.respondent_nature}
+                </p>
+                {collection.other_respondent_nature && (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    <span className="font-medium">Autre nature :</span>{" "}
+                    {collection.other_respondent_nature}
+                  </p>
+                )}
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Genre du propriétaire :</span>{" "}
+                  {collection.merchandise_owner_gender}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Catégorie d'âge :</span>{" "}
+                  {collection.merchandise_owner_age_category}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Handicap :</span>{" "}
+                  {collection.merchandise_owner_has_disability ? "Oui" : "Non"}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Statut :</span>
@@ -1357,38 +1450,114 @@ const CollectionDetails = () => {
               <div className="space-y-2">
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Nom :</span>{" "}
-                  {collection.collector.first_name}{" "}
-                  {collection.collector.last_name}
+                  {collection.collector?.first_name || "Non spécifié"}{" "}
+                  {collection.collector?.last_name || ""}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Téléphone :</span>{" "}
-                  {collection.collector.phone}
+                  {collection.collector?.phone || "Non spécifié"}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Email :</span>{" "}
-                  {collection.collector.email}
+                  {collection.collector?.email || "Non spécifié"}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Genre :</span>{" "}
-                  {collection.collector.gender}
+                  {collection.collector?.gender || "Non spécifié"}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Adresse :</span>{" "}
-                  {collection.collector.address}
+                  {collection.collector?.address || "Non spécifié"}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Nationalité :</span>{" "}
-                  {collection.collector.nationality}
+                  {collection.collector?.nationality || "Non spécifié"}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Date de naissance :</span>{" "}
-                  {new Date(
-                    collection.collector.date_of_birth
-                  ).toLocaleDateString()}
+                  {collection.collector?.date_of_birth
+                    ? new Date(
+                        collection.collector.date_of_birth
+                      ).toLocaleDateString()
+                    : "Non spécifié"}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Lieu de naissance :</span>{" "}
-                  {collection.collector.place_of_birth}
+                  {collection.collector?.place_of_birth || "Non spécifié"}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200 text-lg">
+                Point de Collecte et Corridor
+              </h3>
+              <div className="space-y-2">
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Point de collecte :</span>{" "}
+                  {collection.collectionPoint?.name || "Non spécifié"}
+                </p>
+                {collection.collectionPoint?.description && (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    <span className="font-medium">Description :</span>{" "}
+                    {collection.collectionPoint.description}
+                  </p>
+                )}
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Localité :</span>{" "}
+                  {collection.collectionPoint?.locality || "Non spécifiée"}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Région :</span>{" "}
+                  {collection.collectionPoint?.region || "Non spécifiée"}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Type de point :</span>{" "}
+                  {collection.collectionPoint?.is_formal
+                    ? "Formel"
+                    : "Informel"}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Passage frontière :</span>{" "}
+                  {collection.collectionPoint?.is_border_crossing
+                    ? "Oui"
+                    : "Non"}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Marché :</span>{" "}
+                  {collection.collectionPoint?.is_market ? "Oui" : "Non"}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Fluvial :</span>{" "}
+                  {collection.collectionPoint?.is_fluvial ? "Oui" : "Non"}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Poste de contrôle :</span>{" "}
+                  {collection.collectionPoint?.is_checkpoint ? "Oui" : "Non"}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Corridor :</span>{" "}
+                  {collection.corridor?.name || "Non spécifié"}
+                </p>
+                {collection.corridor?.description && (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    <span className="font-medium">
+                      Description du corridor :
+                    </span>{" "}
+                    {collection.corridor.description}
+                  </p>
+                )}
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Distance :</span>{" "}
+                  {collection.corridor?.distance
+                    ? `${collection.corridor.distance} km`
+                    : "Non spécifiée"}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">
+                    Nombre de postes de contrôle :
+                  </span>{" "}
+                  {collection.corridor?.nbre_checkpoints || 0}
                 </p>
               </div>
             </div>
@@ -1404,12 +1573,12 @@ const CollectionDetails = () => {
                   {collection.originCountry?.flag}{" "}
                   {collection.originCountry?.name})
                 </p>
-                {/* <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">
                     Destination intermédiaire :
                   </span>{" "}
                   {collection.intermediate_destination || "Aucune"}
-                </p> */}
+                </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Point de déchargement :</span>{" "}
                   {collection.finalDestinationCity?.name} (
@@ -1417,11 +1586,21 @@ const CollectionDetails = () => {
                   {collection.destinationCountry?.name})
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Pays d'origine :</span>{" "}
+                  {collection.originCountry?.flag}{" "}
+                  {collection.originCountry?.name}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Pays de destination :</span>{" "}
+                  {collection.destinationCountry?.flag}{" "}
+                  {collection.destinationCountry?.name}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Direction :</span>{" "}
                   {collection.trade_flow_direction}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">Moyen  de transport :</span>{" "}
+                  <span className="font-medium">Moyen de transport :</span>{" "}
                   {collection.transportMode?.name} -{" "}
                   {collection.transportMode?.description}
                 </p>
@@ -1443,10 +1622,10 @@ const CollectionDetails = () => {
                   <span className="font-medium">Devise :</span>{" "}
                   {collection.currency?.name} ({collection.currency?.symbol})
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Saison :</span>{" "}
-                  {collection.season?.name} - {collection.season?.description}
-                </p>
+                  {collection.season?.name || "Non spécifié"}
+                </p> */}
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Poids total :</span>{" "}
                   {collection.total_weight_kg} kg
@@ -1478,12 +1657,12 @@ const CollectionDetails = () => {
                   </span>{" "}
                   {collection.illegal_fees_locations || "Aucun"}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Coordonnées GPS :</span>{" "}
                   {collection.gps_latitude && collection.gps_longitude
                     ? `${collection.gps_latitude}, ${collection.gps_longitude}`
                     : "Non spécifiées"}
-                </p>
+                </p> */}
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Postes de contrôle :</span>{" "}
                   {collection.has_control_posts ? "Oui" : "Non"} (
@@ -1506,10 +1685,10 @@ const CollectionDetails = () => {
                   <span className="font-medium">Jour de marché :</span>{" "}
                   {collection.market_day || "Non spécifié"}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Marchés à proximité :</span>{" "}
                   {collection.nearby_markets || "Aucun"}
-                </p>
+                </p> */}
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-medium">Conditions du marché :</span>{" "}
                   {collection.market_condition || "Non spécifiées"}
@@ -1542,23 +1721,41 @@ const CollectionDetails = () => {
         </ComponentCard>
 
         <ComponentCard
-          title={`Articles collectés (${collection.collectionItems.length})`}
+          title={`Articles collectés (${
+            collection.collectionItems?.length || 0
+          })`}
         >
           <div className="space-y-4">
-            {collection.collectionItems.map((item, index) => (
+            {collection.collectionItems?.map((item, index) => (
               <div
                 key={item.id}
                 className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
               >
                 <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-3">
                   Article {index + 1} -{" "}
-                  {item.product_variety || item.animal_breed || "N/A"}
+                  {item.product?.name || item.animal?.name || "N/A"}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                   <div className="space-y-1">
                     <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Produit :</span>{" "}
+                      {item.product?.name || "Non spécifié"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Code HS :</span>{" "}
+                      {item.product?.HS_code || "Non spécifié"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Description :</span>{" "}
+                      {item.product?.description || "Non spécifiée"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Quantité :</span>{" "}
-                      {item.quantity}
+                      {item.quantity} {item.unity?.symbol || ""}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Unité :</span>{" "}
+                      {item.unity?.name || "Non spécifiée"}
                     </p>
                     <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Prix unitaire :</span>{" "}
@@ -1598,6 +1795,68 @@ const CollectionDetails = () => {
                     )}
                   </div>
                   <div className="space-y-1">
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Origine spécifique :</span>{" "}
+                      {item.specific_origin || "Non spécifiée"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Destination spécifique :
+                      </span>{" "}
+                      {item.specific_destination || "Non spécifiée"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Poids unitaire local :
+                      </span>{" "}
+                      {item.local_unit_weight_kg} kg
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Poids total :</span>{" "}
+                      {item.total_weight_kg} kg
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Coût de chargement :</span>{" "}
+                      {item.loading_cost} FCFA
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Coût de déchargement :
+                      </span>{" "}
+                      {item.unloading_cost} FCFA
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Coût de transport :</span>{" "}
+                      {item.transport_cost} FCFA
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Pays d'origine :</span>{" "}
+                      {item.originCountry?.flag} {item.originCountry?.name}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Ville de chargement :</span>{" "}
+                      {item.loadingCity?.name || "Non spécifiée"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Ville de déchargement :
+                      </span>{" "}
+                      {item.unloadingCity?.name || "Non spécifiée"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Enregistrement douanier :
+                      </span>{" "}
+                      {item.is_customs_registered ? "Oui" : "Non"}
+                    </p>
+                    {item.customs_registration_number && (
+                      <p className="text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">
+                          Numéro d'enregistrement :
+                        </span>{" "}
+                        {item.customs_registration_number}
+                      </p>
+                    )}
                     {item.animal_count && (
                       <p className="text-gray-600 dark:text-gray-400">
                         <span className="font-medium">Nombre d'animaux :</span>{" "}
@@ -1631,18 +1890,9 @@ const CollectionDetails = () => {
                   </div>
                   <div className="space-y-1">
                     <p className="text-gray-600 dark:text-gray-400">
-                      <span className="font-medium">Origine spécifique :</span>{" "}
-                      {item.specific_origin}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      <span className="font-medium">
-                        Destination spécifique :
-                      </span>{" "}
-                      {item.specific_destination}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Pertes :</span>{" "}
-                      {item.losses_quantity} ({item.losses_value} FCFA)
+                      {item.losses_quantity || "0"} ({item.losses_value || "0"}{" "}
+                      FCFA)
                     </p>
                     {item.loss_reasons && (
                       <p className="text-gray-600 dark:text-gray-400">
@@ -1668,8 +1918,20 @@ const CollectionDetails = () => {
                     )}
                     <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Frais spécifiques :</span>{" "}
-                      {item.item_specific_fees} FCFA
+                      {item.item_specific_fees || "0"} FCFA
                     </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Produit saisonnier :</span>{" "}
+                      {item.is_seasonal_product ? "Oui" : "Non"}
+                    </p>
+                    {item.harvest_period && (
+                      <p className="text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">
+                          Période de récolte :
+                        </span>{" "}
+                        {item.harvest_period}
+                      </p>
+                    )}
                     {item.item_notes && (
                       <p className="text-gray-600 dark:text-gray-400">
                         <span className="font-medium">Notes :</span>{" "}
@@ -1684,10 +1946,12 @@ const CollectionDetails = () => {
         </ComponentCard>
 
         <ComponentCard
-          title={`Contrôles effectués (${collection.collectionControls.length})`}
+          title={`Contrôles effectués (${
+            collection.collectionControls?.length || 0
+          })`}
         >
           <div className="space-y-3">
-            {collection.collectionControls.map((control, index) => (
+            {collection.collectionControls?.map((control, index) => (
               <div
                 key={control.id}
                 className="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
@@ -1695,19 +1959,42 @@ const CollectionDetails = () => {
                 <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
                   Contrôle {index + 1} - {control.location}
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="space-y-1">
                     <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Service ID :</span>{" "}
                       {control.service_id}
                     </p>
                     <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Autre organe de contrôle :
+                      </span>{" "}
+                      {control.other_control_body}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Nombre de postes :</span>{" "}
+                      {control.control_posts_count}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Frais payés :</span>{" "}
-                      {control.fees_paid} FCFA
+                      {control.fees_paid || "0"} FCFA
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Montant du paiement :</span>{" "}
+                      {control.payment_amount || "0"} FCFA
                     </p>
                     <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Durée :</span>{" "}
-                      {control.control_duration} {control.duration_type}
+                      {control.control_duration || "Non spécifiée"}{" "}
+                      {control.duration_type || ""}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Type de frais :</span>{" "}
+                      {control.taxType?.name || "Non spécifié"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Autre type de taxe :</span>{" "}
+                      {control.other_tax_type || "Aucun"}
                     </p>
                   </div>
                   <div className="space-y-1">
@@ -1720,12 +2007,78 @@ const CollectionDetails = () => {
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {control.control_result}
+                        {control.control_result || "Non spécifié"}
                       </span>
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Frais payés (Oui/Non) :
+                      </span>{" "}
+                      {control.fees_paid_yes_no ? "Oui" : "Non"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">A un reçu :</span>{" "}
+                      {control.has_receipt ? "Oui" : "Non"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Poste de paiement :</span>{" "}
+                      {control.fees_payment_post || "Non spécifié"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Montant du paiement :</span>{" "}
+                      {control.fees_payment_amount || "0"} FCFA
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Frais illégaux payés :
+                      </span>{" "}
+                      {control.illegal_fees_paid ? "Oui" : "Non"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Poste des frais illégaux :
+                      </span>{" "}
+                      {control.illegal_fees_post || "Aucun"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Montant des frais illégaux :
+                      </span>{" "}
+                      {control.illegal_fees_amount || "0"} FCFA
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Connaît les réglementations communautaires :
+                      </span>{" "}
+                      {control.knows_community_regulations ? "Oui" : "Non"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Connaît les réglementations nationales :
+                      </span>{" "}
+                      {control.knows_national_regulations ? "Oui" : "Non"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Temps d'arrêt par type de poste :
+                      </span>{" "}
+                      {control.stop_time_per_post_type || "Non spécifié"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">
+                        Type de temps de passage frontière :
+                      </span>{" "}
+                      {control.border_crossing_time_type || "Non spécifié"}
                     </p>
                     <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Problèmes :</span>{" "}
                       {control.control_issues || "Aucun"}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Autres difficultés :</span>{" "}
+                      {control.other_difficulties || "Aucune"}
                     </p>
                     {control.notes && (
                       <p className="text-gray-600 dark:text-gray-400">
@@ -1741,10 +2094,12 @@ const CollectionDetails = () => {
         </ComponentCard>
 
         <ComponentCard
-          title={`Validations (${collection.collectionValidations.length})`}
+          title={`Validations (${
+            collection.collectionValidations?.length || 0
+          })`}
         >
           <div className="space-y-3">
-            {collection.collectionValidations.map((validation, index) => (
+            {collection.collectionValidations?.map((validation, index) => (
               <div
                 key={validation.id}
                 className="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
@@ -1778,11 +2133,13 @@ const CollectionDetails = () => {
                     </p>
                     <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Priorité :</span>{" "}
-                      {validation.priority_level}
+                      {validation.priority_level || "Non spécifié"}
                     </p>
                     <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Soumis le :</span>{" "}
-                      {new Date(validation.submitted_at).toLocaleString()}
+                      {validation.submitted_at
+                        ? new Date(validation.submitted_at).toLocaleString()
+                        : "Non spécifié"}
                     </p>
                     {validation.validated_at && (
                       <p className="text-gray-600 dark:text-gray-400">
@@ -1818,7 +2175,7 @@ const CollectionDetails = () => {
                     </p> */}
                     <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Révision :</span>{" "}
-                      {validation.revision_number}
+                      {validation.revision_number || "Non spécifié"}
                     </p>
                     <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-medium">Validation actuelle :</span>{" "}

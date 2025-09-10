@@ -28,7 +28,8 @@ export default function UserDropdown() {
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
-            {userData == undefined ? "..." : userData.firstname} {userData == undefined ? "..." : userData.lastname}</span>
+          {userData == undefined ? "..." : userData.username || "Utilisateur"}
+        </span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
@@ -56,10 +57,14 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {userData == undefined ? "..." : userData.firstname} {userData == undefined ? "..." : userData.lastname}
+            {userData == undefined ? "..." : userData.username || "Utilisateur"}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {userData == undefined ? "..." : userData.email == null ? "Pas d'email" : userData.email}
+            {userData == undefined
+              ? "..."
+              : userData.email == null
+              ? "Pas d'email"
+              : userData.email}
           </span>
         </div>
 

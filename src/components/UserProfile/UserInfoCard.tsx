@@ -4,26 +4,28 @@ import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import useAuth from "../../providers/auth/useAuth.ts";
-import {useTranslation} from "react-i18next";
-
+import { useTranslation } from "react-i18next";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
   // @ts-ignore
   const { userInfo, userData, logout } = useAuth();
+
+  // Debug pour voir les données
+  console.log("UserInfoCard - userData:", userData);
+  console.log("UserInfoCard - userInfo:", userInfo);
   const handleSave = () => {
     // Handle save logic here
     console.log("Saving changes...");
     closeModal();
   };
 
-      const { t, i18n } = useTranslation();
-  
-      const changeLanguage = (lng: string) => {
-          i18n.changeLanguage(lng);
-      };
+  const { t, i18n } = useTranslation();
 
-      
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
+
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -31,52 +33,142 @@ export default function UserInfoCard() {
           <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
             {/* Informations Personnelles */}
 
-            {t('pers_info')}
+            {t("pers_info")}
           </h4>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                {t('pers_name')}
+                {t("pers_name")}
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {userData == undefined ? "..." : userData.lastname}
+                {userData == undefined
+                  ? "..."
+                  : userData.username || "Non spécifié"}
               </p>
             </div>
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                {t('pers_first_name')}
+                {t("pers_first_name")}
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {userData == undefined ? "..." : userData.firstname}
+                {userData == undefined
+                  ? "..."
+                  : userData.username || "Non spécifié"}
               </p>
             </div>
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-              {t('pers_mail')}
+                {t("pers_mail")}
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {userData == undefined ? "..." : userData.email == null ? "Pas d'email" : userData.email}
+                {userData == undefined
+                  ? "..."
+                  : userData.email == null
+                  ? "Pas d'email"
+                  : userData.email}
               </p>
             </div>
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-              {t('pers_phone')}
+                {t("pers_phone")}
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {userData == undefined ? "..." : userData.phone == null ? "Pas de numero enregistré!" : userData.phone}
+                {userData == undefined
+                  ? "..."
+                  : userData.phone == null
+                  ? "Pas de numero enregistré!"
+                  : userData.phone}
+              </p>
+            </div>
+
+            {/* <div>
+              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                ID Utilisateur
+              </p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                {userData == undefined ? "..." : userData.id || "Non spécifié"}
+              </p>
+            </div> */}
+
+            {/* <div>
+              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                Public ID
+              </p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                {userData == undefined
+                  ? "..."
+                  : userData.public_id || "Non spécifié"}
+              </p>
+            </div> */}
+
+            <div>
+              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                Rôle
+              </p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                {userData == undefined
+                  ? "..."
+                  : userData.role_id === 4
+                  ? "Chef d'équipe"
+                  : userData.role_id === 5
+                  ? "Superviseur"
+                  : `Rôle ${userData.role_id}`}
               </p>
             </div>
 
             <div>
               <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                  {t('pers_connex')}
+                Statut
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {userData == undefined ? "..." : userData.isConnected ? t('user_connected')  : t('user_not_connected')}
+                {userData == undefined
+                  ? "..."
+                  : userData.status === "active"
+                  ? "Actif"
+                  : userData.status}
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                En ligne
+              </p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                {userData == undefined
+                  ? "..."
+                  : userData.is_online
+                  ? "Oui"
+                  : "Non"}
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                Créé le
+              </p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                {userData == undefined
+                  ? "..."
+                  : userData.created_at
+                  ? new Date(userData.created_at).toLocaleDateString()
+                  : "Non spécifié"}
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+                Mis à jour le
+              </p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                {userData == undefined
+                  ? "..."
+                  : userData.updated_at
+                  ? new Date(userData.updated_at).toLocaleDateString()
+                  : "Non spécifié"}
               </p>
             </div>
           </div>
