@@ -72,14 +72,19 @@ const AppSidebar: React.FC = () => {
     },
     {
       icon: <PencilIcon />,
-      name: t("agent_collections"),
+      name: t("livestock_collections"),
       path: "/create-user",
     },
     {
-      icon: <UserCircleIcon />,
-      name: t("role_management"),
-      path: "/role-managment",
+      icon: <PencilIcon />,
+      name: t("agricultural_collections"),
+      path: "/agricultural-collections",
     },
+    // {
+    //   icon: <UserCircleIcon />,
+    //   name: t("role_management"),
+    //   path: "/role-managment",
+    // },
   ];
 
   const reportingItems: NavItem[] = [
@@ -376,7 +381,7 @@ const AppSidebar: React.FC = () => {
           <div className="flex flex-col gap-4">
             {renderMenuSection("dashboard", dashboardItems, "dashboard")}
             {/* {renderMenuSection("complaints_management", navItems, "complaints")} */}
-            {renderMenuSection("user_management", usersItems, "users")}
+            {renderMenuSection("collect_management", usersItems, "users")}
             {/* {renderMenuSection("reporting", reportingItems, "reporting")} */}
             {/* {renderMenuSection("transports", transports, "transports")} */}
             {/* {renderMenuSection(
@@ -384,7 +389,7 @@ const AppSidebar: React.FC = () => {
               localities,
               "localities"
             )} */}
-            {renderMenuSection("others", othersItems, "others")}
+            {/* {renderMenuSection("others", othersItems, "others")} */}
           </div>
         </nav>
       </div>

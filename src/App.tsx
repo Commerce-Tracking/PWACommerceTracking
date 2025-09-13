@@ -39,6 +39,7 @@ import TransportsTable from "./pages/transport/TransportsTable.tsx";
 import AddEntity from "./pages/entity/AddEntity.tsx";
 import EntityListPage from "./pages/entity/EntityListPage.tsx";
 import CollectionDetails from "./pages/Collections/CollectionDetails.tsx";
+import AgriculturalCollectionsTables from "./pages/Tables/AgriculturalCollectionsTables.tsx";
 
 export default function App() {
   return (
@@ -85,6 +86,10 @@ export default function App() {
                   <Route
                     path="/collection/:id"
                     element={<CollectionDetails />}
+                  />
+                  <Route
+                    path="/agricultural-collections"
+                    element={<AgriculturalCollectionsTables />}
                   />
                   <Route
                     path="/role-managment"

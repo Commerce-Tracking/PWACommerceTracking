@@ -4,91 +4,122 @@ import { Column } from "primereact/column";
 import { Toast } from "primereact/toast";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
-import axiosInstance from "../../../api/axios";
-import ComponentCard from "../../common/ComponentCard";
-import "primeicons/primeicons.css";
-import "primereact/resources/themes/lara-light-cyan/theme.css";
+import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import axiosInstance from "../../../api/axios";
+
+import ComponentCard from "../../common/ComponentCard";
+// import axiosInstance from "../../api/axios";
 
 interface Collection {
   id: number;
   public_id: string;
-  collection_date: string | null;
+  collection_date: string;
   collector_id: number;
   operator_gender: string;
   operator_type: string;
-  respondent_nature: string;
-  other_respondent_nature: string | null;
-  merchandise_owner_gender: string;
-  merchandise_owner_age_category: string;
-  merchandise_owner_has_disability: number;
   collection_point_id: number | null;
   collection_type: string;
   collection_context: string;
   transport_batch_id: number | null;
-  origin_city_id: number | null;
+  origin_city_id: number;
   origin_country_id: number;
   intermediate_destination: string | null;
-  final_destination_city_id: number | null;
+  final_destination_city_id: number;
   destination_country_id: number;
   trade_flow_direction: string;
   transport_mode_id: number;
   vehicle_registration_number: string;
-  transport_cost: string | null;
-  market_day: number | null;
+  transport_cost: number | null;
+  market_day: string | null;
   nearby_markets: string | null;
   currency_id: number;
   payment_method: string;
-  season_id: number | null;
+  season_id: number;
   market_condition: string | null;
-  market_price_variation: string | null;
-  taxes_fees: string | null;
+  market_price_variation: number | null;
+  taxes_fees: number | null;
   tax_details: string | null;
-  gps_latitude: string | null;
-  gps_longitude: string | null;
-  has_control_posts: number | null;
+  gps_latitude: number | null;
+  gps_longitude: number | null;
+  has_control_posts: boolean | null;
   control_posts_count: number | null;
   control_locations: string | null;
   control_duration_type: string | null;
-  control_duration_value: string | null;
-  taxes_paid: string | null;
-  total_weight_kg: string | null;
-  tax_amount: string | null;
-  illegal_fees_paid: string | null;
+  control_duration_value: number | null;
+  taxes_paid: boolean;
+  total_weight_kg: number;
+  tax_amount: number;
+  illegal_fees_paid: boolean;
   illegal_fees_locations: string | null;
-  illegal_fees_amount: string | null;
-  knows_community_regulations: number | null;
-  knows_national_regulations: number | null;
+  illegal_fees_amount: number | null;
+  knows_community_regulations: boolean | null;
+  knows_national_regulations: boolean | null;
   other_difficulties: string | null;
-  notes: string | null;
-  corridor_id: number;
+  notes: string;
   status: string;
   validated_at: string | null;
   validated_by: number | null;
   created_at: string;
   updated_at: string;
-  // Nouvelles relations
+  collector_name?: string;
+  total_items?: number;
+  total_value?: string;
+  collector?: {
+    id: number;
+    public_id: string;
+    user_id: number;
+    organization_id: number;
+    team_manager_id: number;
+    supervisor_id: number | null;
+    country_id: number;
+    last_name: string;
+    first_name: string;
+    phone: string;
+    email: string;
+    gender: string;
+    address: string;
+    marital_status: string;
+    status: string;
+    date_of_birth: string;
+    place_of_birth: string;
+    nationality: string;
+    actor_role: string;
+    created_at: string;
+    updated_at: string;
+  };
   collectionPoint?: {
     id: number;
     public_id: string;
     name: string;
-    description: string;
+    description: string | null;
+    location: string | null;
     country_id: number;
-    corridor_id: number | null;
-    collection_point_type_id: number;
-    locality: string;
-    region: string;
-    coordinates: string | null;
-    is_formal: boolean;
-    is_border_crossing: boolean;
-    is_market: boolean;
-    is_fluvial: boolean;
-    is_checkpoint: boolean;
-    status: string;
     created_at: string;
     updated_at: string;
+  };
+  originCity?: {
+    id: number;
+    public_id: string;
+    name: string;
+    country_id: number;
+    location: string | null;
+    created_at: string;
+    updated_at: string;
+    country: {
+      id: number;
+      public_id: string;
+      name: string;
+      iso: string;
+      prefix: string;
+      flag: string;
+      currency_id: number;
+      status: string;
+      metadata: any;
+      created_at: string;
+      updated_at: string;
+    };
   };
   originCountry?: {
     id: number;
@@ -102,6 +133,28 @@ interface Collection {
     metadata: any;
     created_at: string;
     updated_at: string;
+  };
+  finalDestinationCity?: {
+    id: number;
+    public_id: string;
+    name: string;
+    country_id: number;
+    location: string | null;
+    created_at: string;
+    updated_at: string;
+    country: {
+      id: number;
+      public_id: string;
+      name: string;
+      iso: string;
+      prefix: string;
+      flag: string;
+      currency_id: number;
+      status: string;
+      metadata: any;
+      created_at: string;
+      updated_at: string;
+    };
   };
   destinationCountry?: {
     id: number;
@@ -125,17 +178,45 @@ interface Collection {
     created_at: string;
     updated_at: string;
   };
-  corridor?: {
+  currency?: {
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+    flag: string | null;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  };
+  season?: {
     id: number;
     public_id: string;
     name: string;
     description: string;
-    country_start_id: number;
-    country_end_id: number;
-    city_start_id: number;
-    city_end_id: number;
-    distance: number;
-    nbre_checkpoints: number;
+    type: string;
+    created_at: string;
+    updated_at: string;
+  };
+  validatedBy?: {
+    id: number;
+    public_id: string;
+    user_id: number;
+    organization_id: number;
+    team_manager_id: number;
+    supervisor_id: number | null;
+    country_id: number;
+    last_name: string;
+    first_name: string;
+    phone: string;
+    email: string;
+    gender: string;
+    address: string;
+    marital_status: string;
+    status: string;
+    date_of_birth: string;
+    place_of_birth: string;
+    nationality: string;
+    actor_role: string;
     created_at: string;
     updated_at: string;
   };
@@ -143,7 +224,7 @@ interface Collection {
     id: number;
     public_id: string;
     collection_id: number;
-    product_id: number;
+    product_id: number | null;
     animal_id: number | null;
     quantity: string;
     unity_id: number;
@@ -154,186 +235,79 @@ interface Collection {
     product_processing_level: string | null;
     product_packaging: string | null;
     animal_count: number | null;
-    animal_categories: string | null;
     animal_age_category: string | null;
     animal_gender: string | null;
     animal_condition: string | null;
     animal_breed: string | null;
-    average_weight_kg: string;
+    average_weight_kg: string | null;
     specific_origin: string | null;
     specific_destination: string | null;
-    losses_quantity: string | null;
-    losses_value: string | null;
+    losses_quantity: string;
+    losses_value: string;
     loss_reasons: string | null;
-    required_special_permits: number | null;
+    required_special_permits: boolean | null;
     special_permits_details: string | null;
-    item_specific_fees: string | null;
-    is_seasonal_product: number | null;
+    item_specific_fees: string;
+    is_seasonal_product: boolean;
     harvest_period: string | null;
     item_notes: string | null;
-    local_unit_weight_kg: string;
-    total_weight_kg: string;
-    loading_cost: string;
-    unloading_cost: string;
-    transport_cost: string;
-    origin_country_id: number;
-    loading_city_id: number;
-    unloading_city_id: number;
-    product_origin_country_id: number | null;
-    customs_registration_number: string | null;
-    is_customs_registered: number;
     created_at: string;
     updated_at: string;
-    product: {
-      id: number;
-      public_id: string;
-      name: string;
-      product_type_id: number;
-      HS_code: string;
-      description: string;
-      created_at: string;
-      updated_at: string;
-    };
-    animal: any | null;
-    unity: {
-      id: number;
-      public_id: string;
-      name: string;
-      description: string;
-      symbol: string;
-      created_at: string;
-      updated_at: string;
-    };
-    originCountry: {
-      id: number;
-      public_id: string;
-      name: string;
-      iso: string;
-      prefix: string;
-      flag: string;
-      currency_id: number;
-      status: string;
-      metadata: any;
-      created_at: string;
-      updated_at: string;
-    };
-    loadingCity: {
-      id: number;
-      public_id: string;
-      name: string;
-      country_id: number;
-      location: string | null;
-      created_at: string;
-      updated_at: string;
-    };
-    unloadingCity: {
-      id: number;
-      public_id: string;
-      name: string;
-      country_id: number;
-      location: string | null;
-      created_at: string;
-      updated_at: string;
-    };
-    productOriginCountry: any | null;
   }>;
-  collectionControls?: Array<{
+  collectionControls?: Array<any>;
+  collectionValidations?: Array<{
     id: number;
+    public_id: string;
     collection_id: number;
-    checkpoint_id: number | null;
-    service_id: number;
-    location: string;
-    fees_paid: string | null;
-    payment_amount: string | null;
-    duration_type: string | null;
-    control_duration: string | null;
-    control_result: string | null;
-    control_issues: string | null;
-    notes: string | null;
-    other_control_body: string;
-    control_posts_count: number;
-    stop_time_per_post_type: string | null;
-    border_crossing_time_type: string | null;
-    fees_paid_yes_no: number;
-    has_receipt: number;
-    tax_type_id: number;
-    other_tax_type: string;
-    fees_payment_post: string | null;
-    fees_payment_amount: string | null;
-    illegal_fees_paid: number;
-    illegal_fees_post: string | null;
-    illegal_fees_amount: string | null;
-    knows_community_regulations: number;
-    knows_national_regulations: number;
-    other_difficulties: string | null;
+    validation_level: string;
+    validator_id: number;
+    validation_action: string;
+    validation_result: string;
+    data_quality_score: number | null;
+    validation_notes: string | null;
+    rejection_reason: string | null;
+    correction_instructions: string | null;
+    quality_issues: string | null;
+    validation_metadata: any;
+    requires_field_verification: boolean | null;
+    requires_data_correction: boolean | null;
+    requires_additional_documentation: boolean | null;
+    validation_deadline: string | null;
+    priority_level: string;
+    submitted_at: string;
+    validated_at: string | null;
+    validation_duration_minutes: number | null;
+    previous_validation_id: number | null;
+    is_current_validation: number;
+    revision_number: number;
+    validation_source: string;
+    system_metadata: any;
     created_at: string;
     updated_at: string;
-    taxType: {
-      id: number;
-      name: string;
-      description: string;
-      created_at: string;
-      updated_at: string;
-    };
   }>;
-  // Champs de validation
-  validated_by_team_manager?: boolean;
-  validation_result?: string | null;
-  validation_action?: string | null;
-  validation_notes?: string | null;
-  data_quality_score?: number | null;
-  rejection_reason?: string | null;
+  corridor?: {
+    id: number;
+    public_id: string;
+    name: string;
+    description: string | null;
+    origin_country_id: number;
+    destination_country_id: number;
+    distance_km: number | null;
+    estimated_duration_hours: number | null;
+    transport_modes: string[];
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+  };
+  team_manager_validation_result?: string;
+  team_manager_validation_date?: string;
+  team_manager_rejection_reason?: string;
+  supervisor_validation_result?: string;
+  supervisor_validation_date?: string;
+  supervisor_rejection_reason?: string;
   validated_by_supervisor?: boolean;
-  supervisor_validation_result?: string | null;
-  supervisor_validated_at?: string | null;
-  // Champs calculés
-  total_value?: string;
-  collector_name?: string;
-  total_items?: number;
-  // Champs de compatibilité pour l'ancienne structure
-  collector?: {
-    first_name: string;
-    last_name: string;
-  };
-  originCity?: {
-    name: string;
-  };
-  finalDestinationCity?: {
-    name: string;
-  };
-}
-
-// Interface pour la structure de validation du superviseur
-interface ValidationItem {
-  id: number;
-  public_id: string;
-  collection_id: number;
-  validation_level: string;
-  validator_id: number;
-  validation_action: string;
-  validation_result: string;
-  data_quality_score: number | null;
-  validation_notes: string | null;
-  rejection_reason: string | null;
-  correction_instructions: string | null;
-  quality_issues: any;
-  validation_metadata: any;
-  requires_field_verification: number | null;
-  requires_data_correction: number | null;
-  requires_additional_documentation: number | null;
-  validation_deadline: string | null;
-  priority_level: string;
-  submitted_at: string;
-  validated_at: string | null;
-  validation_duration_minutes: number | null;
-  previous_validation_id: number | null;
-  is_current_validation: number;
-  revision_number: number;
-  validation_source: string;
-  system_metadata: any;
-  created_at: string;
-  updated_at: string;
-  collection: Collection;
+  validation_notes?: string;
+  data_quality_score?: number;
 }
 
 interface ApiResponse {
@@ -344,7 +318,7 @@ interface ApiResponse {
   except: any;
 }
 
-const CollectionsTableOne = () => {
+const AgriculturalCollectionsTableOne = () => {
   const [tableData, setTableData] = useState<Collection[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -360,11 +334,11 @@ const CollectionsTableOne = () => {
   const navigate = useNavigate();
   const { userInfo } = useAuth();
 
-  // Fonction pour récupérer les collectes de bétail
+  // Fonction pour récupérer les collectes agricoles
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      console.log("Récupération des collectes de bétail...");
+      console.log("Récupération des collectes agricoles...");
 
       let response: any;
 
@@ -373,7 +347,7 @@ const CollectionsTableOne = () => {
         const searchParams: any = {
           page: String(currentPage),
           limit: String(rowsPerPage),
-          collection_type: "livestock",
+          collection_type: "agricultural",
         };
 
         if (globalFilter) {
@@ -390,14 +364,12 @@ const CollectionsTableOne = () => {
           "/api/trade-flow/agents/collections",
           { params: searchParams }
         );
-
-
       } else {
         // Chef d'équipe : utiliser l'endpoint digitalized-collections
         const searchParams: any = {
           page: String(currentPage),
           limit: String(rowsPerPage),
-          collection_type: "livestock",
+          collection_type: "agricultural",
           ...(userInfo?.role_id === 4 && { include_rejected: "true" }),
         };
 
@@ -525,11 +497,11 @@ const CollectionsTableOne = () => {
       }
     } catch (err: any) {
       console.error(
-        "Erreur lors de la récupération des collectes de bétail:",
+        "Erreur lors de la récupération des collectes agricoles:",
         err
       );
       setError(
-        err.message || "Erreur lors de la récupération des collectes de bétail"
+        err.message || "Erreur lors de la récupération des collectes agricoles"
       );
     } finally {
       setIsLoading(false);
@@ -585,17 +557,6 @@ const CollectionsTableOne = () => {
     i18n.changeLanguage(lng);
   };
 
-  const actionBodyTemplate = (rowData: Collection) => {
-    return (
-      <button
-        onClick={() => handleViewDetails(rowData)}
-        className="px-3 py-1 text-sm text-white bg-green-600 rounded "
-      >
-        Voir détails
-      </button>
-    );
-  };
-
   const collectorBodyTemplate = (rowData: Collection) => {
     return (
       <div className="flex items-center">
@@ -615,10 +576,70 @@ const CollectionsTableOne = () => {
     );
   };
 
+  const originBodyTemplate = (rowData: Collection) => {
+    const city = rowData.originCity?.name || "Non spécifié";
+    const country = rowData.originCountry?.name || "Non spécifié";
+    const flag = rowData.originCountry?.flag || "";
+
+    return (
+      <div className="flex items-center">
+        <span className="text-lg mr-2">{flag}</span>
+        <div>
+          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {city}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {country}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const destinationBodyTemplate = (rowData: Collection) => {
+    const city = rowData.finalDestinationCity?.name || "Non spécifié";
+    const country = rowData.destinationCountry?.name || "Non spécifié";
+    const flag = rowData.destinationCountry?.flag || "";
+
+    return (
+      <div className="flex items-center">
+        <span className="text-lg mr-2">{flag}</span>
+        <div>
+          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {city}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {country}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const totalValueBodyTemplate = (rowData: Collection) => {
+    const value = parseFloat(rowData.total_value || "0");
+    const formattedValue = new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "XOF",
+    }).format(value);
+
+    return (
+      <div className="text-sm font-medium text-green-600">{formattedValue}</div>
+    );
+  };
+
   const dateBodyTemplate = (rowData: Collection) => {
-    return rowData.collection_date
-      ? new Date(rowData.collection_date).toLocaleDateString()
-      : new Date(rowData.created_at).toLocaleDateString();
+    const date = new Date(rowData.created_at);
+    const formattedDate = date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    return (
+      <span className="text-sm text-gray-600 dark:text-gray-400">
+        {formattedDate}
+      </span>
+    );
   };
 
   const getCollectionTypeLabel = (type: string) => {
@@ -642,208 +663,129 @@ const CollectionsTableOne = () => {
   };
 
   const statusBodyTemplate = (rowData: Collection) => {
-    const statusColors = {
-      submitted: "bg-yellow-100 text-yellow-800",
-      validated: "bg-green-100 text-green-800",
-      rejected: "bg-red-100 text-red-800",
-      draft: "bg-gray-100 text-gray-800",
-      approved: "bg-green-100 text-green-800",
-      pending: "bg-blue-100 text-blue-800",
-    };
-
-    // Pour le chef d'équipe, afficher le statut de validation après ses actions
-    let displayStatus = rowData.status;
-    let statusLabel = "Statut initial";
-
     if (userInfo?.role_id === 4) {
-      // Chef d'équipe : afficher le statut après validation
-      if (rowData.validated_by_team_manager) {
-        // Utiliser validation_action et validation_result pour déterminer le statut
-        if (
-          rowData.validation_action === "approved" ||
-          rowData.validation_result === "approved"
-        ) {
-          displayStatus = "approved";
-          statusLabel = "Validée";
-        } else if (
-          rowData.validation_action === "rejected" ||
-          rowData.validation_result === "rejected"
-        ) {
-          displayStatus = "rejected";
-          statusLabel = "Rejetée";
-        } else {
-          displayStatus = "pending";
-          statusLabel = "En attente";
-        }
-      } else {
-        displayStatus = "submitted";
-        statusLabel = "À traiter";
-      }
-    } else if (userInfo?.role_id === 5) {
-      // Superviseur : afficher le statut de validation du superviseur
-      console.log("Superviseur - Données de la collection:", {
-        id: rowData.id,
-        validated_by_supervisor: rowData.validated_by_supervisor,
-        supervisor_validation_result: rowData.supervisor_validation_result,
-        supervisor_validated_at: rowData.supervisor_validated_at,
-        validated_by_team_manager: rowData.validated_by_team_manager,
-        validation_result: rowData.validation_result,
-      });
-
-      if (rowData.supervisor_validation_result === "approved") {
-        // Collecte validée par le superviseur
-        displayStatus = "approved";
-        statusLabel = "Validée par superviseur";
-      } else if (rowData.supervisor_validation_result === "rejected") {
-        // Collecte rejetée par le superviseur
-        displayStatus = "rejected";
-        statusLabel = "Rejetée par superviseur";
-      } else if (
-        rowData.validated_by_team_manager &&
-        rowData.validation_result === "approved"
-      ) {
-        // Collecte validée par le chef d'équipe, en attente du superviseur
-        displayStatus = "pending";
-        statusLabel = "En attente superviseur";
-      } else {
-        // Collecte pas encore validée par le chef d'équipe
-        displayStatus = "submitted";
-        statusLabel = "En attente chef d'équipe";
-      }
-    }
-
-    return (
-      <div className="flex flex-col gap-1">
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            statusColors[displayStatus as keyof typeof statusColors] ||
-            "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {statusLabel}
-        </span>
-        {userInfo?.role_id === 4 && rowData.validated_by_team_manager && (
-          <div className="text-xs text-gray-500">
-            <div>
-              {rowData.validation_action === "rejected" ||
-              rowData.validation_result === "rejected"
-                ? "Rejetée le"
-                : "Traitée le"}{" "}
-              {rowData.validated_at
-                ? new Date(rowData.validated_at).toLocaleDateString()
-                : "N/A"}
-            </div>
-            {rowData.rejection_reason && (
-              <div className="mt-1">
-                <button
-                  onClick={() => showRejectionReason(rowData.rejection_reason!)}
-                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors duration-200"
-                >
-                  <i className="pi pi-eye mr-1"></i>
-                  Voir motif
-                </button>
-              </div>
+      // Chef d'équipe
+      if (rowData.team_manager_validation_result === "rejected") {
+        return (
+          <div className="flex flex-col items-start">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+              Rejetée le{" "}
+              {rowData.team_manager_validation_date
+                ? new Date(
+                    rowData.team_manager_validation_date
+                  ).toLocaleDateString("fr-FR")
+                : ""}
+            </span>
+            {rowData.team_manager_rejection_reason && (
+              <button
+                onClick={() =>
+                  showRejectionReason(rowData.team_manager_rejection_reason!)
+                }
+                className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors duration-200 mt-1"
+              >
+                <i className="pi pi-eye mr-1"></i>
+                Voir motif
+              </button>
             )}
           </div>
-        )}
-        {userInfo?.role_id === 5 &&
-          (rowData.supervisor_validation_result === "approved" ||
-            rowData.supervisor_validation_result === "rejected") && (
-            <div className="text-xs text-gray-500">
-              <div>
-                {rowData.supervisor_validation_result === "rejected"
-                  ? "Rejetée le"
-                  : "Validée le"}{" "}
-                {rowData.supervisor_validated_at
-                  ? new Date(
-                      rowData.supervisor_validated_at
-                    ).toLocaleDateString()
-                  : "N/A"}
-              </div>
-            </div>
-          )}
-      </div>
-    );
-  };
-
-  const originBodyTemplate = (rowData: Collection) => {
-    // Utiliser les nouvelles données structurées
-    let cityName = "Non spécifié";
-    let countryName = rowData.originCountry?.name || "Non spécifié";
-    let countryFlag = rowData.originCountry?.flag || "";
-
-    // Essayer de récupérer le nom de la ville depuis les collectionItems
-    if (rowData.collectionItems && rowData.collectionItems.length > 0) {
-      const firstItem = rowData.collectionItems[0];
-      if (firstItem.loadingCity?.name) {
-        cityName = firstItem.loadingCity.name;
+        );
+      } else if (rowData.team_manager_validation_result === "approved") {
+        return (
+          <div className="flex items-center">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+              Validée le{" "}
+              {rowData.team_manager_validation_date
+                ? new Date(
+                    rowData.team_manager_validation_date
+                  ).toLocaleDateString("fr-FR")
+                : ""}
+            </span>
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex items-center">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+              À traiter
+            </span>
+          </div>
+        );
+      }
+    } else if (userInfo?.role_id === 5) {
+      // Superviseur
+      if (rowData.supervisor_validation_result === "rejected") {
+        return (
+          <div className="flex flex-col items-start">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+              Rejetée le{" "}
+              {rowData.supervisor_validation_date
+                ? new Date(
+                    rowData.supervisor_validation_date
+                  ).toLocaleDateString("fr-FR")
+                : ""}
+            </span>
+            {rowData.supervisor_rejection_reason && (
+              <button
+                onClick={() =>
+                  showRejectionReason(rowData.supervisor_rejection_reason!)
+                }
+                className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors duration-200 mt-1"
+              >
+                <i className="pi pi-eye mr-1"></i>
+                Voir motif
+              </button>
+            )}
+          </div>
+        );
+      } else if (rowData.supervisor_validation_result === "approved") {
+        return (
+          <div className="flex items-center">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+              Validée le{" "}
+              {rowData.supervisor_validation_date
+                ? new Date(
+                    rowData.supervisor_validation_date
+                  ).toLocaleDateString("fr-FR")
+                : ""}
+            </span>
+          </div>
+        );
+      } else if (rowData.team_manager_validation_result === "approved") {
+        return (
+          <div className="flex items-center">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+              En attente de validation du superviseur
+            </span>
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex items-center">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+              En attente de validation du chef d'équipe
+            </span>
+          </div>
+        );
       }
     }
 
-    // Fallback sur les anciens champs si les nouveaux ne sont pas disponibles
-    if (cityName === "Non spécifié" && rowData.origin_city_id) {
-      cityName = `Ville ID: ${rowData.origin_city_id}`;
-    }
-
     return (
-      <div className="text-sm">
-        <div className="font-medium">
-          {cityName} ({countryFlag} {countryName})
-        </div>
+      <div className="flex items-center">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+          {rowData.status}
+        </span>
       </div>
     );
   };
 
-  const destinationBodyTemplate = (rowData: Collection) => {
-    // Utiliser les nouvelles données structurées
-    let cityName = "Non spécifié";
-    let countryName = rowData.destinationCountry?.name || "Non spécifié";
-    let countryFlag = rowData.destinationCountry?.flag || "";
-
-    // Essayer de récupérer le nom de la ville depuis les collectionItems
-    if (rowData.collectionItems && rowData.collectionItems.length > 0) {
-      const firstItem = rowData.collectionItems[0];
-      if (firstItem.unloadingCity?.name) {
-        cityName = firstItem.unloadingCity.name;
-      }
-    }
-
-    // Fallback sur les anciens champs si les nouveaux ne sont pas disponibles
-    if (cityName === "Non spécifié" && rowData.final_destination_city_id) {
-      cityName = `Ville ID: ${rowData.final_destination_city_id}`;
-    }
-
+  const actionBodyTemplate = (rowData: Collection) => {
     return (
-      <div className="text-sm">
-        <div className="font-medium">
-          {cityName} ({countryFlag} {countryName})
-        </div>
-      </div>
-    );
-  };
-
-  const totalValueBodyTemplate = (rowData: Collection) => {
-    let totalValue = 0;
-
-    // Calculer la valeur totale à partir des collectionItems
-    if (rowData.collectionItems && rowData.collectionItems.length > 0) {
-      totalValue = rowData.collectionItems.reduce((sum, item) => {
-        return sum + parseFloat(item.total_value || "0");
-      }, 0);
-    } else if (rowData.total_value) {
-      // Fallback sur l'ancien champ si disponible
-      totalValue = parseFloat(rowData.total_value);
-    }
-
-    const formattedValue = totalValue.toLocaleString("fr-FR", {
-      style: "currency",
-      currency: "XOF",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-
-    return (
-      <div className="text-sm font-medium text-green-600">{formattedValue}</div>
+      <button
+        onClick={() => handleViewDetails(rowData)}
+        className="px-3 py-1 text-sm text-white bg-green-600 rounded hover:bg-green-700 transition-colors"
+      >
+        {t("see_details")}
+      </button>
     );
   };
 
@@ -880,7 +822,7 @@ const CollectionsTableOne = () => {
 
   return (
     <div className="p-4">
-      <ComponentCard title={t("livestock_collections")}>
+      <ComponentCard title={t("agricultural_collections")}>
         <DataTable
           value={tableData}
           loading={isLoading}
@@ -907,7 +849,7 @@ const CollectionsTableOne = () => {
               ? ["validation_notes", "data_quality_score"]
               : []),
           ]}
-          emptyMessage="Aucune collecte de bétail trouvée."
+          emptyMessage="Aucune collecte agricole trouvée."
           paginator
           rowsPerPageOptions={[5, 10, 25]}
           tableStyle={{ minWidth: "50rem" }}
@@ -985,4 +927,4 @@ const CollectionsTableOne = () => {
   );
 };
 
-export default CollectionsTableOne;
+export default AgriculturalCollectionsTableOne;
