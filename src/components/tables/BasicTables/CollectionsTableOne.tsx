@@ -301,6 +301,12 @@ interface Collection {
   finalDestinationCity?: {
     name: string;
   };
+  // Propriétés de validation supplémentaires
+  team_manager_validation_result?: string | null;
+  team_manager_validation_date?: string;
+  team_manager_rejection_reason?: string;
+  supervisor_validation_date?: string;
+  supervisor_rejection_reason?: string;
 }
 
 // Interface pour la structure de validation du superviseur
@@ -352,7 +358,7 @@ const CollectionsTableOne = () => {
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [totalRecords, setTotalRecords] = useState<number>(0);
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const [filters, setFilters] = useState<any>({});
+  const [validationStatus, setValidationStatus] = useState<string>("");
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [selectedRejectionReason, setSelectedRejectionReason] =
     useState<string>("");
@@ -366,80 +372,38 @@ const CollectionsTableOne = () => {
       setIsLoading(true);
       console.log("Récupération des collectes de bétail...");
 
-      let response: any;
+      // Utiliser le nouvel endpoint avec filtres de statut
+      const searchParams: any = {
+        page: String(currentPage),
+        limit: String(rowsPerPage),
+        collection_type: "livestock",
+      };
 
-      if (userInfo?.role_id === 5) {
-        // Superviseur : utiliser l'endpoint agents/collections pour ne voir que les collectes validées
-        const searchParams: any = {
-          page: String(currentPage),
-          limit: String(rowsPerPage),
-          collection_type: "livestock",
-        };
-
-        if (globalFilter) {
-          searchParams.search = globalFilter;
-        }
-
-        Object.keys(filters).forEach((key) => {
-          if (filters[key] && filters[key].value) {
-            searchParams[`filter_${key}`] = filters[key].value;
-          }
-        });
-
-        response = await axiosInstance.get<ApiResponse>(
-          "/api/trade-flow/agents/collections",
-          { params: searchParams }
-        );
-
-
-      } else {
-        // Chef d'équipe : utiliser l'endpoint digitalized-collections
-        const searchParams: any = {
-          page: String(currentPage),
-          limit: String(rowsPerPage),
-          collection_type: "livestock",
-          ...(userInfo?.role_id === 4 && { include_rejected: "true" }),
-        };
-
-        if (globalFilter) {
-          searchParams.search = globalFilter;
-        }
-
-        Object.keys(filters).forEach((key) => {
-          if (filters[key] && filters[key].value) {
-            searchParams[`filter_${key}`] = filters[key].value;
-          }
-        });
-
-        response = await axiosInstance.get<ApiResponse>(
-          "/api/trade-flow/digitalized-collections",
-          { params: searchParams }
-        );
+      // Ajouter le filtre de statut de validation
+      if (validationStatus) {
+        searchParams.validation_status = validationStatus;
       }
+
+      // Ajouter la recherche globale
+      if (globalFilter) {
+        searchParams.search = globalFilter;
+      }
+
+      const response = await axiosInstance.get<ApiResponse>(
+        "/api/trade-flow/collections/by-validation-status",
+        { params: searchParams }
+      );
 
       if (response.data.success) {
         let collections: Collection[] = [];
 
-        if (userInfo?.role_id === 5) {
-          // Pour les superviseurs, les données sont dans result.data[].collection
-          if (
-            response.data.result?.data &&
-            Array.isArray(response.data.result.data)
-          ) {
-            collections = response.data.result.data.map(
-              (item: any) => item.collection
-            );
-            setTotalRecords(response.data.result.total || collections.length);
-          }
-        } else {
-          // Pour les chefs d'équipe, structure normale
-          if (Array.isArray(response.data.result)) {
-            collections = response.data.result;
-          } else if (response.data.result && "data" in response.data.result) {
-            const result = response.data.result as any;
-            collections = result.data;
-            setTotalRecords(result.total || collections.length);
-          }
+        // Structure de données unifiée pour le nouvel endpoint
+        if (Array.isArray(response.data.result)) {
+          collections = response.data.result;
+        } else if (response.data.result && "data" in response.data.result) {
+          const result = response.data.result as any;
+          collections = result.data;
+          setTotalRecords(result.total || collections.length);
         }
 
         // Récupérer les statuts de validation pour les chefs d'équipe et superviseurs
@@ -501,9 +465,36 @@ const CollectionsTableOne = () => {
           collections = await Promise.all(validationPromises);
         }
 
-        // Le filtrage pour les superviseurs se fait maintenant côté serveur via les paramètres de l'API
+        // Filtrage côté client pour s'assurer que les statuts correspondent
+        if (validationStatus) {
+          collections = collections.filter((collection) => {
+            const teamManagerResult = collection.team_manager_validation_result;
+            const supervisorResult = collection.supervisor_validation_result;
 
-        // Traitement des données de validation si nécessaire
+            if (userInfo?.role_id === 4) {
+              // Chef d'équipe : regarde le statut de validation du chef d'équipe
+              if (validationStatus === "approved") {
+                return teamManagerResult === "approved";
+              } else if (validationStatus === "rejected") {
+                return teamManagerResult === "rejected";
+              } else if (validationStatus === "pending") {
+                return !teamManagerResult || teamManagerResult === "pending";
+              }
+            } else if (userInfo?.role_id === 5) {
+              // Superviseur : regarde le statut de validation du superviseur
+              if (validationStatus === "approved") {
+                return supervisorResult === "approved";
+              } else if (validationStatus === "rejected") {
+                return supervisorResult === "rejected";
+              } else if (validationStatus === "pending") {
+                return !supervisorResult || supervisorResult === "pending";
+              }
+            }
+            return true;
+          });
+        }
+
+        // Traitement des données
         const transformedData = collections.map((item) => ({
           ...item,
           collector_name: item.collector
@@ -541,11 +532,11 @@ const CollectionsTableOne = () => {
     console.log("currentPage:", currentPage);
     console.log("rowsPerPage:", rowsPerPage);
     console.log("globalFilter:", globalFilter);
-    console.log("filters:", filters);
+    console.log("validationStatus:", validationStatus);
     console.log("=== FIN USEEFFECT DEBUG ===");
 
     fetchData();
-  }, [currentPage, rowsPerPage, globalFilter, filters]);
+  }, [currentPage, rowsPerPage, globalFilter, validationStatus]);
 
   const handleViewDetails = (collection: Collection) => {
     // Passer les données de la collecte via l'état de navigation
@@ -572,11 +563,12 @@ const CollectionsTableOne = () => {
       setGlobalFilter(event.globalFilter);
       setCurrentPage(1);
     }
+  };
 
-    if (event.filters) {
-      setFilters(event.filters);
-      setCurrentPage(1);
-    }
+  // Fonction pour gérer les changements de filtre de statut de validation
+  const handleValidationStatusChange = (status: string) => {
+    setValidationStatus(status);
+    setCurrentPage(1);
   };
 
   const { t, i18n } = useTranslation();
@@ -881,6 +873,25 @@ const CollectionsTableOne = () => {
   return (
     <div className="p-4">
       <ComponentCard title={t("livestock_collections")}>
+        {/* Filtre de statut de validation */}
+        <div className="mb-4 flex flex-wrap gap-4">
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Statut de validation
+            </label>
+            <select
+              value={validationStatus}
+              onChange={(e) => handleValidationStatusChange(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="">Tous les statuts</option>
+              <option value="approved">Approuvé</option>
+              <option value="rejected">Rejeté</option>
+              <option value="pending">En attente</option>
+            </select>
+          </div>
+        </div>
+
         <DataTable
           value={tableData}
           loading={isLoading}
@@ -890,7 +901,6 @@ const CollectionsTableOne = () => {
           first={(currentPage - 1) * rowsPerPage}
           totalRecords={totalRecords}
           onPage={onPageChange}
-          filterDisplay="row"
           globalFilter={globalFilter}
           onFilter={onFilter}
           globalFilterFields={[

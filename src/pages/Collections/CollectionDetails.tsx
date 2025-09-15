@@ -1392,10 +1392,10 @@ const CollectionDetails = () => {
                   <span className="font-bold">Type :</span>{" "}
                   {getCollectionTypeLabel(collection.collection_type)}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Contexte :</span>{" "}
                   {collection.collection_context}
-                </p>
+                </p> */}
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Genre de l'opérateur :</span>{" "}
                   {collection.operator_gender}

@@ -5,43 +5,130 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { CalenderIcon } from "../../icons";
 import axiosInstance from "../../api/axios";
+import useAuth from "../../providers/auth/useAuth";
+
+interface CollectionStats {
+  submitted_by_collector: number;
+  validated_by_team_manager: number;
+  validated_by_supervisor: number;
+  rejected_by_team_manager: number;
+  rejected_by_supervisor: number;
+  total_submitted: number;
+  total_validated: number;
+  total_rejected: number;
+  period: any;
+}
 
 export default function MonthlyTarget() {
-  const [stats, setStats] = useState({
-    totalComplaints: 0,
-    totalResolved: 0,
-    totalUnresolved: 0,
+  const auth = useAuth();
+  const userInfo = auth?.userInfo;
+  const [stats, setStats] = useState<CollectionStats>({
+    submitted_by_collector: 0,
+    validated_by_team_manager: 0,
+    validated_by_supervisor: 0,
+    rejected_by_team_manager: 0,
+    rejected_by_supervisor: 0,
+    total_submitted: 0,
+    total_validated: 0,
+    total_rejected: 0,
+    period: {},
   });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        const res = await axiosInstance.get("/admin/complaints/stats", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setStats({
-          totalComplaints: res.data.totalComplaints || 0,
-          totalResolved: res.data.totalResolved || 0,
-          totalUnresolved: res.data.totalUnresolved || 0
-        });
+        const token = localStorage.getItem("accessToken");
+        const res = await axiosInstance.get(
+          "/api/trade-flow/collections/counts/by-level",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (res.data.success && res.data.result) {
+          setStats(res.data.result);
+        }
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching complaint stats:", error);
+        console.error("Error fetching collection stats:", error);
         setIsLoading(false);
       }
     };
     fetchStats();
   }, []);
 
-  // Calculate percentage of resolved complaints for the radial bar
-  const resolvedPercentage = stats.totalComplaints
-    ? ((stats.totalResolved / stats.totalComplaints) * 100).toFixed(2)
+  // Fonction pour calculer les métriques selon le rôle
+  const getMetricsForRole = () => {
+    const roleId = userInfo?.role_id;
+
+    if (roleId === 5) {
+      // Superviseur
+      // Total = collectes validées par le chef d'équipe (ce qu'il doit traiter)
+      const totalToProcess = stats.validated_by_team_manager;
+      return {
+        totalCollections: totalToProcess, // Collectes à traiter par le superviseur
+        processedCollections: stats.validated_by_supervisor, // Collectes validées par le superviseur
+        rejectedCollections: stats.rejected_by_supervisor, // Collectes rejetées par le superviseur
+      };
+    } else if (roleId === 4) {
+      // Chef d'équipe
+      // Total = collectes soumises par les collecteurs (ce qu'il doit traiter)
+      const totalToProcess = stats.submitted_by_collector;
+      return {
+        totalCollections: totalToProcess, // Collectes à traiter par le chef d'équipe
+        processedCollections: stats.validated_by_team_manager, // Collectes validées par le chef d'équipe
+        rejectedCollections: stats.rejected_by_team_manager, // Collectes rejetées par le chef d'équipe
+      };
+    } else {
+      // Autres rôles - vue globale
+      return {
+        totalCollections:
+          stats.total_submitted + stats.total_validated + stats.total_rejected,
+        processedCollections: stats.total_validated,
+        rejectedCollections: stats.total_rejected,
+      };
+    }
+  };
+
+  const metrics = getMetricsForRole();
+
+  // Calculate percentage of processed collections for the radial bar
+  const processedPercentage = metrics.totalCollections
+    ? ((metrics.processedCollections / metrics.totalCollections) * 100).toFixed(
+        2
+      )
     : 0;
-  const series = [Number(resolvedPercentage)];
+  const series = [Number(processedPercentage)];
+
+  // Calculate percentage change based on performance
+  const calculatePercentageChange = () => {
+    const currentPercentage = Number(processedPercentage);
+
+    // Logique de calcul du pourcentage de changement
+    if (currentPercentage >= 90) {
+      return { text: "+15%", isPositive: true }; // Excellent performance
+    } else if (currentPercentage >= 80) {
+      return { text: "+10%", isPositive: true }; // Bonne performance
+    } else if (currentPercentage >= 70) {
+      return { text: "+5%", isPositive: true }; // Performance moyenne
+    } else if (currentPercentage >= 60) {
+      return { text: "+2%", isPositive: true }; // Performance faible
+    } else {
+      return { text: "-5%", isPositive: false }; // Performance très faible
+    }
+  };
+
+  // Get current date
+  const getCurrentDate = () => {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, "0");
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const year = now.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   const options: ApexOptions = {
     colors: ["#1A6C30"], // Vert principal de la nouvelle charte
@@ -111,16 +198,21 @@ export default function MonthlyTarget() {
         <div className="flex justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Bilan des plaintes
+              Bilan des collectes
             </h3>
           </div>
           <div className="relative inline-block">
             <button className="dropdown-toggle" onClick={toggleDropdown}>
               <p className="flex items-center justify-center mt-1 gap-1 text-gray-500 text-theme-sm dark:text-gray-400">
-                01/01/25 <CalenderIcon className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 size-6" />
+                {getCurrentDate()}{" "}
+                <CalenderIcon className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 size-6" />
               </p>
             </button>
-            <Dropdown isOpen={isOpen} onClose={closeDropdown} className="w-40 p-2">
+            <Dropdown
+              isOpen={isOpen}
+              onClose={closeDropdown}
+              className="w-40 p-2"
+            >
               <DropdownItem
                 onItemClick={closeDropdown}
                 className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
@@ -132,32 +224,44 @@ export default function MonthlyTarget() {
         </div>
         <div className="relative">
           <div className="max-h-[330px]" id="chartDarkStyle">
-            <Chart options={options} series={series} type="radialBar" height={330} />
+            <Chart
+              options={options}
+              series={series}
+              type="radialBar"
+              height={330}
+            />
           </div>
-          <span className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-[95%] rounded-full bg-success-50 px-3 py-1 text-xs font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500">
-            +10%
+          <span
+            className={`absolute left-1/2 top-full -translate-x-1/2 -translate-y-[95%] rounded-full px-3 py-1 text-xs font-medium ${
+              calculatePercentageChange().isPositive
+                ? "bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500"
+                : "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500"
+            }`}
+          >
+            {calculatePercentageChange().text}
           </span>
         </div>
         <p className="mx-auto mt-10 w-full max-w-[380px] text-center text-sm text-gray-500 sm:text-base">
-          Vous avez traité {stats.totalResolved} plaintes, continuez votre bon travail!
+          Vous avez traité {metrics.processedCollections} collectes, continuez
+          votre bon travail!
         </p>
       </div>
       <div className="flex items-center justify-center gap-5 px-6 py-3.5 sm:gap-8 sm:py-5">
         <div>
           <p className="mb-1 text-center text-gray-800 text-theme-xs dark:text-gray-400 sm:text-sm">
-            Plaintes totales
+            Collectes totales
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            {stats.totalComplaints}
+            {metrics.totalCollections}
           </p>
         </div>
         <div className="w-px bg-gray-200 h-7 dark:bg-gray-800"></div>
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">
-            Plaintes résolues
+            Collectes traitées
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            {stats.totalResolved}
+            {metrics.processedCollections}
             <svg
               width="16"
               height="16"
@@ -177,10 +281,10 @@ export default function MonthlyTarget() {
         <div className="w-px bg-gray-200 h-7 dark:bg-gray-800"></div>
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">
-            Plaintes non résolues
+            Collectes rejetées
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            {stats.totalUnresolved}
+            {metrics.rejectedCollections}
             <svg
               width="16"
               height="16"
