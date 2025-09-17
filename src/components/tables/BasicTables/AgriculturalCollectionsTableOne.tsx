@@ -326,10 +326,10 @@ const AgriculturalCollectionsTableOne = () => {
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [totalRecords, setTotalRecords] = useState<number>(0);
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const [validationStatus, setValidationStatus] = useState<string>("");
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [selectedRejectionReason, setSelectedRejectionReason] =
     useState<string>("");
+  const [validationStatus, setValidationStatus] = useState<string>("");
   const toast = useRef<Toast>(null);
   const navigate = useNavigate();
   const { userInfo } = useAuth();
@@ -340,85 +340,164 @@ const AgriculturalCollectionsTableOne = () => {
       setIsLoading(true);
       console.log("Récupération des collectes agricoles...");
 
-      // Utiliser le nouvel endpoint avec filtres de statut
-      const searchParams: any = {
-        page: String(currentPage),
-        limit: String(rowsPerPage),
-        collection_type: "agricultural",
-      };
+      let response;
 
-      // Ajouter le filtre de statut de validation
+      // Si un statut de validation est sélectionné, utiliser l'endpoint de filtrage approprié
       if (validationStatus) {
-        searchParams.validation_status = validationStatus;
-      }
+        const searchParams: any = {
+          collection_type: "agricultural",
+          page: String(currentPage),
+          limit: String(rowsPerPage),
+        };
 
-      // Ajouter la recherche globale
-      if (globalFilter) {
-        searchParams.search = globalFilter;
-      }
+        // Ajouter la recherche globale
+        if (globalFilter) {
+          searchParams.search = globalFilter;
+        }
 
-      const response = await axiosInstance.get<ApiResponse>(
-        "/api/trade-flow/collections/by-validation-status",
-        { params: searchParams }
-      );
+        if (userInfo?.role_id === 4) {
+          // Chef d'équipe : utiliser collection_status
+          searchParams.collection_status = validationStatus;
+          response = await axiosInstance.get<ApiResponse>(
+            "/api/trade-flow/collections/by-validation-status",
+            {
+              params: searchParams,
+            }
+          );
+        } else if (userInfo?.role_id === 5) {
+          // Superviseur : utiliser validation_status et validation_level
+          searchParams.validation_status = validationStatus;
+          searchParams.validation_level = "2";
+          response = await axiosInstance.get<ApiResponse>(
+            "/api/trade-flow/collections/by-validation-status",
+            {
+              params: searchParams,
+            }
+          );
+        }
+      } else {
+        // Sinon, utiliser l'endpoint normal
+        const searchParams: any = {
+          page: String(currentPage),
+          limit: String(rowsPerPage),
+          collection_type: "agricultural",
+        };
+
+        // Ajouter la recherche globale
+        if (globalFilter) {
+          searchParams.search = globalFilter;
+        }
+
+        response = await axiosInstance.get<ApiResponse>(
+          "/api/trade-flow/agents/collections",
+          {
+            params: searchParams,
+          }
+        );
+      }
 
       if (response.data.success) {
         let collections: Collection[] = [];
 
         // Structure de données unifiée pour le nouvel endpoint
+        let result: any = null;
         if (Array.isArray(response.data.result)) {
           collections = response.data.result;
         } else if (response.data.result && "data" in response.data.result) {
-          const result = response.data.result as any;
+          result = response.data.result as any;
+
+          // Pour les deux rôles, les données sont directement dans result.data
           collections = result.data;
+
           setTotalRecords(result.total || collections.length);
         }
 
-        // Récupérer les statuts de validation pour les chefs d'équipe et superviseurs
-        if (userInfo?.role_id === 4 || userInfo?.role_id === 5) {
-          const validationPromises = collections.map(async (collection) => {
+        // Récupérer les informations de workflow pour chaque collection
+        const processedCollections = await Promise.all(
+          collections.map(async (collection, index) => {
+            // Vérifier si la collection est valide avant de continuer
+            if (!collection || !collection.id) {
+              console.warn(
+                "Collection invalide trouvée à l'index",
+                index,
+                collection
+              );
+              return null;
+            }
+
+            const validationData = result ? result.data[index] : collection;
+
+            // Extraire les données de validation depuis collectionValidations
+            let teamManagerValidation: any = null;
+            let supervisorValidation: any = null;
+
+            if (
+              (collection as any).collectionValidations &&
+              (collection as any).collectionValidations.length > 0
+            ) {
+              // Trouver la validation actuelle (is_current_validation: 1)
+              const currentValidation =
+                (collection as any).collectionValidations.find(
+                  (validation: any) => validation.is_current_validation === 1
+                ) ||
+                (collection as any).collectionValidations[
+                  (collection as any).collectionValidations.length - 1
+                ];
+
+              // Déterminer si c'est une validation de chef d'équipe ou superviseur
+              if (currentValidation.validation_level === "1") {
+                teamManagerValidation = currentValidation;
+              } else if (currentValidation.validation_level === "2") {
+                supervisorValidation = currentValidation;
+              }
+            }
+
             try {
+              // Récupérer les informations de workflow pour avoir les statuts de validation complets
               const workflowResponse = await axiosInstance.get(
                 `/api/trade-flow/collections/${collection.id}/workflow`
               );
+
               if (workflowResponse.data.success) {
                 const workflow = workflowResponse.data.result;
-                const teamManagerValidation = workflow.team_manager_validation;
+                const workflowTeamManagerValidation =
+                  workflow.team_manager_validation;
                 const supervisorValidation = workflow.supervisor_validation;
-
-                const isRejected =
-                  teamManagerValidation?.validation_action === "rejected" ||
-                  teamManagerValidation?.validation_result === "rejected";
-                const isApproved =
-                  teamManagerValidation?.validation_action === "approved" ||
-                  teamManagerValidation?.validation_result === "approved";
 
                 return {
                   ...collection,
-                  validated_by_team_manager: isRejected || isApproved,
+                  // Informations de validation du chef d'équipe
+                  validated_by_team_manager:
+                    workflowTeamManagerValidation?.validation_result ===
+                    "approved",
                   validation_result:
-                    teamManagerValidation?.validation_result || null,
+                    workflowTeamManagerValidation?.validation_result,
                   validation_action:
-                    teamManagerValidation?.validation_action || null,
-                  validated_at: teamManagerValidation?.validated_at || null,
+                    workflowTeamManagerValidation?.validation_action,
+                  validated_at: workflowTeamManagerValidation?.validated_at,
                   rejection_reason:
-                    teamManagerValidation?.rejection_reason || null,
+                    workflowTeamManagerValidation?.rejection_reason,
+                  data_quality_score:
+                    workflowTeamManagerValidation?.data_quality_score,
+                  validation_notes:
+                    workflowTeamManagerValidation?.validation_notes,
+                  // Pour la compatibilité avec l'ancienne structure
+                  team_manager_validation_result:
+                    workflowTeamManagerValidation?.validation_result,
+                  team_manager_validation_date:
+                    workflowTeamManagerValidation?.validated_at,
+                  team_manager_rejection_reason:
+                    workflowTeamManagerValidation?.rejection_reason,
+                  // Informations de validation du superviseur
                   validated_by_supervisor:
                     supervisorValidation?.validation_result === "approved",
                   supervisor_validation_result:
-                    supervisorValidation?.validation_result || null,
-                  supervisor_validated_at:
-                    supervisorValidation?.validated_at || null,
-                  team_manager_validation_result:
-                    teamManagerValidation?.validation_result || null,
-                  team_manager_validation_date:
-                    teamManagerValidation?.validated_at || null,
-                  team_manager_rejection_reason:
-                    teamManagerValidation?.rejection_reason || null,
+                    supervisorValidation?.validation_result,
+                  supervisor_validated_at: supervisorValidation?.validated_at,
                   supervisor_validation_date:
-                    supervisorValidation?.validated_at || null,
+                    supervisorValidation?.validated_at,
                   supervisor_rejection_reason:
-                    supervisorValidation?.rejection_reason || null,
+                    supervisorValidation?.rejection_reason,
                 };
               }
             } catch (error) {
@@ -427,40 +506,51 @@ const AgriculturalCollectionsTableOne = () => {
                 error
               );
             }
-            return collection;
-          });
 
-          collections = await Promise.all(validationPromises);
-        }
+            // Utiliser les données de collectionValidations directement
+            return {
+              ...collection,
+              // Informations de validation du chef d'équipe
+              validated_by_team_manager:
+                teamManagerValidation?.validation_result === "approved" ||
+                collection.status === "validated",
+              validation_result:
+                teamManagerValidation?.validation_result ||
+                (collection.status === "validated" ? "approved" : null),
+              validation_action:
+                teamManagerValidation?.validation_action ||
+                (collection.status === "validated" ? "validated" : null),
+              validated_at:
+                teamManagerValidation?.validated_at || collection.validated_at,
+              rejection_reason: teamManagerValidation?.rejection_reason,
+              data_quality_score: teamManagerValidation?.data_quality_score,
+              validation_notes: teamManagerValidation?.validation_notes,
+              // Pour la compatibilité avec l'ancienne structure
+              team_manager_validation_result:
+                teamManagerValidation?.validation_result ||
+                (collection.status === "validated" ? "approved" : null),
+              team_manager_validation_date:
+                teamManagerValidation?.validated_at || collection.validated_at,
+              team_manager_rejection_reason:
+                teamManagerValidation?.rejection_reason,
+              // Informations de validation du superviseur
+              validated_by_supervisor:
+                supervisorValidation?.validation_result === "approved",
+              supervisor_validation_result:
+                supervisorValidation?.validation_result,
+              supervisor_validated_at: supervisorValidation?.validated_at,
+              supervisor_validation_date: supervisorValidation?.validated_at,
+              supervisor_rejection_reason:
+                supervisorValidation?.rejection_reason,
+            };
+          })
+        );
 
-        // Filtrage côté client pour s'assurer que les statuts correspondent
-        if (validationStatus) {
-          collections = collections.filter((collection) => {
-            const teamManagerResult = collection.team_manager_validation_result;
-            const supervisorResult = collection.supervisor_validation_result;
+        collections = processedCollections.filter(
+          (collection) => collection !== null
+        );
 
-            if (userInfo?.role_id === 4) {
-              // Chef d'équipe : regarde le statut de validation du chef d'équipe
-              if (validationStatus === "approved") {
-                return teamManagerResult === "approved";
-              } else if (validationStatus === "rejected") {
-                return teamManagerResult === "rejected";
-              } else if (validationStatus === "pending") {
-                return !teamManagerResult || teamManagerResult === "pending";
-              }
-            } else if (userInfo?.role_id === 5) {
-              // Superviseur : regarde le statut de validation du superviseur
-              if (validationStatus === "approved") {
-                return supervisorResult === "approved";
-              } else if (validationStatus === "rejected") {
-                return supervisorResult === "rejected";
-              } else if (validationStatus === "pending") {
-                return !supervisorResult || supervisorResult === "pending";
-              }
-            }
-            return true;
-          });
-        }
+        // Pas de filtrage côté client - laisser l'API gérer tous les filtres
 
         // Traitement des données
         const transformedData = collections.map((item) => ({
@@ -531,12 +621,6 @@ const AgriculturalCollectionsTableOne = () => {
       setGlobalFilter(event.globalFilter);
       setCurrentPage(1);
     }
-  };
-
-  // Fonction pour gérer les changements de filtre de statut de validation
-  const handleValidationStatusChange = (status: string) => {
-    setValidationStatus(status);
-    setCurrentPage(1);
   };
 
   const { t, i18n } = useTranslation();
@@ -650,24 +734,45 @@ const AgriculturalCollectionsTableOne = () => {
     setShowRejectionModal(true);
   };
 
+  const handleValidationStatusChange = (status: string) => {
+    setValidationStatus(status);
+    setCurrentPage(1); // Reset à la première page
+  };
+
   const statusBodyTemplate = (rowData: Collection) => {
     if (userInfo?.role_id === 4) {
       // Chef d'équipe
-      if (rowData.team_manager_validation_result === "rejected") {
+      console.log("Chef d'équipe - Données de la collection:", {
+        id: rowData.id,
+        status: rowData.status,
+        validated_by_team_manager: (rowData as any).validated_by_team_manager,
+        validation_result: (rowData as any).validation_result,
+        validation_action: (rowData as any).validation_action,
+        team_manager_validation_result: (rowData as any)
+          .team_manager_validation_result,
+        team_manager_validation_date: (rowData as any)
+          .team_manager_validation_date,
+        team_manager_rejection_reason: (rowData as any)
+          .team_manager_rejection_reason,
+      });
+
+      if (rowData.status === "rejected") {
         return (
           <div className="flex flex-col items-start">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
               Rejetée le{" "}
-              {rowData.team_manager_validation_date
+              {(rowData as any).team_manager_validation_date
                 ? new Date(
-                    rowData.team_manager_validation_date
+                    (rowData as any).team_manager_validation_date
                   ).toLocaleDateString("fr-FR")
                 : ""}
             </span>
-            {rowData.team_manager_rejection_reason && (
+            {(rowData as any).team_manager_rejection_reason && (
               <button
                 onClick={() =>
-                  showRejectionReason(rowData.team_manager_rejection_reason!)
+                  showRejectionReason(
+                    (rowData as any).team_manager_rejection_reason!
+                  )
                 }
                 className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors duration-200 mt-1"
               >
@@ -677,14 +782,14 @@ const AgriculturalCollectionsTableOne = () => {
             )}
           </div>
         );
-      } else if (rowData.team_manager_validation_result === "approved") {
+      } else if (rowData.status === "validated") {
         return (
           <div className="flex items-center">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
               Validée le{" "}
-              {rowData.team_manager_validation_date
+              {(rowData as any).team_manager_validation_date
                 ? new Date(
-                    rowData.team_manager_validation_date
+                    (rowData as any).team_manager_validation_date
                   ).toLocaleDateString("fr-FR")
                 : ""}
             </span>
@@ -700,58 +805,97 @@ const AgriculturalCollectionsTableOne = () => {
         );
       }
     } else if (userInfo?.role_id === 5) {
-      // Superviseur
-      if (rowData.supervisor_validation_result === "rejected") {
+      // Superviseur : vérifier si la collection a été validée par le chef d'équipe mais pas encore par le superviseur
+
+      // Vérifier s'il y a une validation du superviseur (validation_level: "2")
+      const hasSupervisorValidation =
+        rowData.supervisor_validation_result !== undefined &&
+        rowData.supervisor_validation_result !== null;
+
+      if (hasSupervisorValidation) {
+        // La collection a été traitée par le superviseur
+        if (rowData.supervisor_validation_result === "approved") {
+          return (
+            <div className="flex items-center">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                Validée le{" "}
+                {rowData.supervisor_validation_date
+                  ? new Date(
+                      rowData.supervisor_validation_date
+                    ).toLocaleDateString("fr-FR")
+                  : ""}
+              </span>
+            </div>
+          );
+        } else if (rowData.supervisor_validation_result === "rejected") {
+          return (
+            <div className="flex flex-col items-start">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                Rejetée le{" "}
+                {rowData.supervisor_validation_date
+                  ? new Date(
+                      rowData.supervisor_validation_date
+                    ).toLocaleDateString("fr-FR")
+                  : ""}
+              </span>
+              {rowData.supervisor_rejection_reason && (
+                <button
+                  onClick={() =>
+                    showRejectionReason(rowData.supervisor_rejection_reason!)
+                  }
+                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors duration-200 mt-1"
+                >
+                  <i className="pi pi-eye mr-1"></i>
+                  Voir motif
+                </button>
+              )}
+            </div>
+          );
+        } else {
+          return (
+            <div className="flex items-center">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                En attente superviseur
+              </span>
+            </div>
+          );
+        }
+      } else if (rowData.status === "validated") {
+        // Collection validée par le chef d'équipe mais pas encore traitée par le superviseur
         return (
           <div className="flex flex-col items-start">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-              Rejetée le{" "}
-              {rowData.supervisor_validation_date
-                ? new Date(
-                    rowData.supervisor_validation_date
-                  ).toLocaleDateString("fr-FR")
-                : ""}
-            </span>
-            {rowData.supervisor_rejection_reason && (
-              <button
-                onClick={() =>
-                  showRejectionReason(rowData.supervisor_rejection_reason!)
-                }
-                className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors duration-200 mt-1"
-              >
-                <i className="pi pi-eye mr-1"></i>
-                Voir motif
-              </button>
-            )}
-          </div>
-        );
-      } else if (rowData.supervisor_validation_result === "approved") {
-        return (
-          <div className="flex items-center">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-              Validée le{" "}
-              {rowData.supervisor_validation_date
-                ? new Date(
-                    rowData.supervisor_validation_date
-                  ).toLocaleDateString("fr-FR")
-                : ""}
-            </span>
-          </div>
-        );
-      } else if (rowData.team_manager_validation_result === "approved") {
-        return (
-          <div className="flex items-center">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-              En attente de validation du superviseur
+              En attente superviseur
             </span>
+            <div className="text-xs text-gray-500 mt-1">
+              Validée par chef d'équipe le{" "}
+              {rowData.team_manager_validation_date
+                ? new Date(
+                    rowData.team_manager_validation_date
+                  ).toLocaleDateString("fr-FR")
+                : rowData.validated_at
+                ? new Date(rowData.validated_at).toLocaleDateString("fr-FR")
+                : "N/A"}
+            </div>
           </div>
         );
       } else {
+        // Toutes les autres collections sont en attente du superviseur
         return (
-          <div className="flex items-center">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-              En attente de validation du chef d'équipe
+          <div className="flex flex-col items-start">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+              En attente superviseur
             </span>
+            <div className="text-xs text-gray-500 mt-1">
+              Validée par chef d'équipe le{" "}
+              {rowData.team_manager_validation_date
+                ? new Date(
+                    rowData.team_manager_validation_date
+                  ).toLocaleDateString("fr-FR")
+                : rowData.validated_at
+                ? new Date(rowData.validated_at).toLocaleDateString("fr-FR")
+                : "N/A"}
+            </div>
           </div>
         );
       }
@@ -811,25 +955,38 @@ const AgriculturalCollectionsTableOne = () => {
   return (
     <div className="p-4">
       <ComponentCard title={t("agricultural_collections")}>
-        {/* Filtre de statut de validation */}
-        <div className="mb-4 flex flex-wrap gap-4">
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Statut de validation
-            </label>
-            <select
-              value={validationStatus}
-              onChange={(e) => handleValidationStatusChange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            >
-              <option value="">Tous les statuts</option>
-              <option value="approved">Approuvé</option>
-              <option value="rejected">Rejeté</option>
-              <option value="pending">En attente</option>
-            </select>
+        {/* Filtre de statut de validation pour le chef d'équipe et le superviseur */}
+        {(userInfo?.role_id === 4 || userInfo?.role_id === 5) && (
+          <div className="mb-4 flex flex-wrap gap-4">
+            <div className="flex flex-col">
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                Statut de validation
+              </label>
+              <select
+                value={validationStatus}
+                onChange={(e) => handleValidationStatusChange(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              >
+                <option value="">Tous les statuts</option>
+                {userInfo?.role_id === 4 ? (
+                  // Options pour le chef d'équipe
+                  <>
+                    <option value="submitted">En attente</option>
+                    <option value="validated">Validée</option>
+                    <option value="rejected">Rejetée</option>
+                  </>
+                ) : (
+                  // Options pour le superviseur
+                  <>
+                    <option value="pending">En attente</option>
+                    <option value="approved">Validée</option>
+                    <option value="rejected">Rejetée</option>
+                  </>
+                )}
+              </select>
+            </div>
           </div>
-        </div>
-
+        )}
         <DataTable
           value={tableData}
           loading={isLoading}
@@ -918,8 +1075,13 @@ const AgriculturalCollectionsTableOne = () => {
           <Button
             label="Fermer"
             icon="pi pi-times"
+            style={{
+              backgroundColor: "#00277F",
+              borderColor: "#00277F",
+              color: "white",
+            }}
             onClick={() => setShowRejectionModal(false)}
-            className="p-button-text"
+            className="w-full sm:w-auto text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
           />
         }
       >

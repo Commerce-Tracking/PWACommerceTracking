@@ -587,7 +587,7 @@ const CollectionDetails = () => {
   const [showValidationDialog, setShowValidationDialog] =
     useState<boolean>(false);
   const [validationNotes, setValidationNotes] = useState<string>("");
-  const [dataQualityScore, setDataQualityScore] = useState<number>(85);
+  const [dataQualityScore, setDataQualityScore] = useState<number | null>(null);
   const [showRejectDialog, setShowRejectDialog] = useState<boolean>(false);
   const [rejectReason, setRejectReason] = useState<string>("");
   const [isRejecting, setIsRejecting] = useState<boolean>(false);
@@ -875,7 +875,7 @@ const CollectionDetails = () => {
 
         setShowValidationDialog(false);
         setValidationNotes("");
-        setDataQualityScore(85);
+        setDataQualityScore(null);
       } else {
         console.error("Échec de la validation:", response.data);
         toast.current?.show({
@@ -1203,12 +1203,13 @@ const CollectionDetails = () => {
 
   const canSupervisorValidate = () => {
     // Pour le superviseur, vérifier si la collecte est validée par le chef d'équipe
-    // et n'est pas encore validée par le superviseur
+    // et n'est pas encore validée ou rejetée par le superviseur
     const result =
       userInfo?.role_id === 5 &&
       collection?.validated_by_team_manager &&
       collection?.validation_result === "approved" &&
-      !collection?.validated_by_supervisor;
+      !collection?.validated_by_supervisor &&
+      collection?.supervisor_validation_result !== "rejected";
 
     console.log("=== DEBUG canSupervisorValidate ===");
     console.log("userInfo?.role_id === 5:", userInfo?.role_id === 5);
@@ -1224,6 +1225,10 @@ const CollectionDetails = () => {
       "!collection?.validated_by_supervisor:",
       !collection?.validated_by_supervisor
     );
+    console.log(
+      "collection?.supervisor_validation_result !== 'rejected':",
+      collection?.supervisor_validation_result !== "rejected"
+    );
     console.log("Résultat final:", result);
     console.log("=== FIN DEBUG canSupervisorValidate ===");
     return result;
@@ -1234,7 +1239,7 @@ const CollectionDetails = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement des détails...</p>
+          <p className="mt-4 text-gray-800">Chargement des détails...</p>
         </div>
       </div>
     );
@@ -1267,7 +1272,7 @@ const CollectionDetails = () => {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-800 dark:text-gray-400">
               {collection.collection_type} - {collection.status}
             </p>
           </div>
@@ -1287,10 +1292,7 @@ const CollectionDetails = () => {
                   className="!bg-green-600 !hover:bg-green-700 w-full sm:w-auto text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
                   onClick={() => setShowValidationDialog(true)}
                 />
-                {(userInfo?.role_id === 4 ||
-                  (canSupervisorValidate() &&
-                    collection.supervisor_validation_result !==
-                      "rejected")) && (
+                {(userInfo?.role_id === 4 || canSupervisorValidate()) && (
                   <Button
                     label="Rejeter la collecte"
                     icon="pi pi-times"
@@ -1381,14 +1383,14 @@ const CollectionDetails = () => {
                 Information général de la collecte
               </h3>
               <div className="space-y-2">
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">ID :</span> {collection.id}
                 </p>
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Public ID :</span>{" "}
                   {collection.public_id}
                 </p> */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Type :</span>{" "}
                   {getCollectionTypeLabel(collection.collection_type)}
                 </p>
@@ -1396,37 +1398,37 @@ const CollectionDetails = () => {
                   <span className="font-bold">Contexte :</span>{" "}
                   {collection.collection_context}
                 </p> */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Genre de l'opérateur :</span>{" "}
                   {collection.operator_gender}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Type d'opérateur :</span>{" "}
                   {collection.operator_type}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Nature du répondant :</span>{" "}
                   {collection.respondent_nature}
                 </p>
                 {collection.other_respondent_nature && (
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-gray-800 dark:text-gray-400">
                     <span className="font-bold">Autre nature :</span>{" "}
                     {collection.other_respondent_nature}
                   </p>
                 )}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Genre du propriétaire :</span>{" "}
                   {collection.merchandise_owner_gender}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Catégorie d'âge :</span>{" "}
                   {collection.merchandise_owner_age_category}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Handicap :</span>{" "}
                   {collection.merchandise_owner_has_disability ? "Oui" : "Non"}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Statut :</span>
                   <span
                     className={`ml-2 px-2 py-1 rounded text-xs ${
@@ -1440,17 +1442,17 @@ const CollectionDetails = () => {
                     {collection.status}
                   </span>
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Date de collecte :</span>{" "}
                   {collection.collection_date
                     ? new Date(collection.collection_date).toLocaleDateString()
                     : "Non définie"}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Créé le :</span>{" "}
                   {new Date(collection.created_at).toLocaleString()}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Mise à jour le :</span>{" "}
                   {new Date(collection.updated_at).toLocaleString()}
                 </p>
@@ -1462,7 +1464,7 @@ const CollectionDetails = () => {
                   <span className="font-bold">Variation des prix :</span>{" "}
                   {collection.market_price_variation} %
                 </p> */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Notes :</span>{" "}
                   {collection.notes || "Aucune"}
                 </p>
@@ -1474,16 +1476,16 @@ const CollectionDetails = () => {
                 Collecteur
               </h3>
               <div className="space-y-2">
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Nom :</span>{" "}
                   {collection.collector?.first_name || "Non spécifié"}{" "}
                   {collection.collector?.last_name || ""}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Téléphone :</span>{" "}
                   {collection.collector?.phone || "Non spécifié"}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Email :</span>{" "}
                   {collection.collector?.email || "Non spécifié"}
                 </p>
@@ -1519,7 +1521,7 @@ const CollectionDetails = () => {
                 Point de Collecte et Corridor
               </h3>
               <div className="space-y-2">
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Point de collecte :</span>{" "}
                   {collection.collectionPoint?.name || "Non spécifié"}
                 </p>
@@ -1529,7 +1531,7 @@ const CollectionDetails = () => {
                     {collection.collectionPoint.description}
                   </p>
                 )} */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Localité :</span>{" "}
                   {collection.collectionPoint?.locality || "Non spécifiée"}
                 </p>
@@ -1561,12 +1563,12 @@ const CollectionDetails = () => {
                   <span className="font-bold">Poste de contrôle :</span>{" "}
                   {collection.collectionPoint?.is_checkpoint ? "Oui" : "Non"}
                 </p> */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Corridor :</span>{" "}
                   {collection.corridor?.name || "Non spécifié"}
                 </p>
                 {collection.corridor?.description && (
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-gray-800 dark:text-gray-400">
                     <span className="font-bold">Description du corridor :</span>{" "}
                     {collection.corridor.description}
                   </p>
@@ -1577,7 +1579,7 @@ const CollectionDetails = () => {
                     ? `${collection.corridor.distance} km`
                     : "Non spécifiée"}
                 </p> */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">
                     Nombre de postes de contrôle :
                   </span>{" "}
@@ -1591,7 +1593,7 @@ const CollectionDetails = () => {
                 Transport et Taxes
               </h3>
               <div className="space-y-2">
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Pays de chargement :</span>{" "}
                   {collection.originCity?.name} (
                   {collection.originCountry?.flag}{" "}
@@ -1601,7 +1603,7 @@ const CollectionDetails = () => {
                   <span className="font-bold">Destination intermédiaire :</span>{" "}
                   {collection.intermediate_destination || "Aucune"}
                 </p> */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Pays de déchargement :</span>{" "}
                   {collection.finalDestinationCity?.name} (
                   {collection.destinationCountry?.flag}{" "}
@@ -1612,35 +1614,35 @@ const CollectionDetails = () => {
                   {collection.originCountry?.flag}{" "}
                   {collection.originCountry?.name}
                 </p> */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Pays de destination :</span>{" "}
                   {collection.destinationCountry?.flag}{" "}
                   {collection.destinationCountry?.name}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Direction du flux:</span>{" "}
                   {collection.trade_flow_direction}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Moyen de transport :</span>{" "}
                   {collection.transportMode?.name} -{" "}
                   {collection.transportMode?.description}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Plaque :</span>{" "}
                   {collection.vehicle_registration_number}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Coût du transport :</span>{" "}
                   {collection.transport_cost
                     ? `${collection.transport_cost} ${collection.currency?.symbol}`
                     : "Non spécifié"}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Paiement :</span>{" "}
                   {collection.payment_method}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Devise :</span>{" "}
                   {collection.currency?.name || `ID: ${collection.currency_id}`}{" "}
                   ({collection.currency?.symbol || "N/A"})
@@ -1649,32 +1651,32 @@ const CollectionDetails = () => {
                   <span className="font-bold">Saison :</span>{" "}
                   {collection.season?.name || "Non spécifié"}
                 </p> */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Poids total :</span>{" "}
                   {collection.total_weight_kg} kg
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Taxes et frais :</span>{" "}
                   {collection.taxes_fees
                     ? `${collection.taxes_fees} ${collection.currency?.symbol}`
                     : "Non spécifié"}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Détails des taxes :</span>{" "}
                   {collection.tax_details || "Aucun"}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Taxes payées :</span>{" "}
                   {collection.taxes_paid ? "Oui" : "Non"} (
                   {collection.tax_amount} {collection.currency?.symbol})
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Frais illégaux payés :</span>{" "}
                   {collection.illegal_fees_paid ? "Oui" : "Non"} (
                   {collection.illegal_fees_amount || "Aucun"}{" "}
                   {collection.currency?.symbol})
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Lieux des frais illégaux :</span>{" "}
                   {collection.illegal_fees_locations || "Aucun"}
                 </p>
@@ -1684,18 +1686,18 @@ const CollectionDetails = () => {
                     ? `${collection.gps_latitude}, ${collection.gps_longitude}`
                     : "Non spécifiées"}
                 </p> */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Postes de contrôle :</span>{" "}
                   {collection.has_control_posts ? "Oui" : "Non"} (
                   {collection.control_posts_count || 0} postes)
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">
                     Lieux des postes de contrôle :
                   </span>{" "}
                   {collection.control_locations || "Aucun"}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Durée des contrôles :</span>{" "}
                   {collection.control_duration_value &&
                   collection.control_duration_type
@@ -1732,7 +1734,7 @@ const CollectionDetails = () => {
                   </span>{" "}
                   {collection.knows_national_regulations ? "Oui" : "Non"}
                 </p> */}
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Autres difficultés :</span>{" "}
                   {collection.other_difficulties || "Aucune"}
                 </p>
@@ -1758,7 +1760,7 @@ const CollectionDetails = () => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                   <div className="space-y-1">
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Produit :</span>{" "}
                       {item.product?.name ||
                         item.animal?.name ||
@@ -1768,23 +1770,23 @@ const CollectionDetails = () => {
                       <span className="font-bold">Code HS :</span>{" "}
                       {item.product?.HS_code || "Non spécifié"}
                     </p> */}
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Description :</span>{" "}
                       {item.product?.description || "Non spécifiée"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Quantité :</span>{" "}
                       {item.quantity} {item.unity?.symbol || ""}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Unité :</span>{" "}
                       {item.unity?.name || "Non spécifiée"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Prix unitaire :</span>{" "}
                       {item.unit_price} FCFA
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Valeur totale :</span>{" "}
                       {item.total_value} FCFA
                     </p>
@@ -1824,15 +1826,15 @@ const CollectionDetails = () => {
                       </span>{" "}
                       {item.specific_destination || "Non spécifiée"}
                     </p> */}
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Poids unitaire local :</span>{" "}
                       {item.local_unit_weight_kg} kg
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Poids total :</span>{" "}
                       {item.total_weight_kg} kg
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Coût de chargement :</span>{" "}
                       {item.loading_cost} FCFA
                     </p>
@@ -1840,7 +1842,7 @@ const CollectionDetails = () => {
                       <span className="font-bold">Coût de déchargement :</span>{" "}
                       {item.unloading_cost} FCFA
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Coût de transport :</span>{" "}
                       {item.transport_cost} FCFA
                     </p>
@@ -1856,14 +1858,14 @@ const CollectionDetails = () => {
                       <span className="font-bold">Ville de déchargement :</span>{" "}
                       {item.unloadingCity?.name || "Non spécifiée"}
                     </p> */}
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
                         Enregistrement douanier :
                       </span>{" "}
                       {item.is_customs_registered ? "Oui" : "Non"}
                     </p>
                     {item.customs_registration_number && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">
                           Numéro d'enregistrement :
                         </span>{" "}
@@ -1871,61 +1873,61 @@ const CollectionDetails = () => {
                       </p>
                     )}
                     {item.animal_count && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Nombre d'animaux :</span>{" "}
                         {item.animal_count}
                       </p>
                     )}
                     {item.animal_breed && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Race :</span>{" "}
                         {item.animal_breed}
                       </p>
                     )}
                     {item.animal_condition && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Condition :</span>{" "}
                         {item.animal_condition}
                       </p>
                     )}
                     {item.animal_gender && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Genre des animaux :</span>{" "}
                         {item.animal_gender}
                       </p>
                     )}
                     {item.average_weight_kg && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Poids moyen :</span>{" "}
                         {item.average_weight_kg} kg
                       </p>
                     )}
                   </div>
                   <div className="space-y-1">
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Pertes :</span>{" "}
                       {item.losses_quantity || "0"} ({item.losses_value || "0"}{" "}
                       FCFA)
                     </p>
                     {item.loss_reasons && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Raisons des pertes :</span>{" "}
                         {item.loss_reasons}
                       </p>
                     )}
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
                         Permis spéciaux requis :
                       </span>{" "}
                       {item.required_special_permits ? "Oui" : "Non"}
                     </p>
                     {item.special_permits_details && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Détails des permis :</span>{" "}
                         {item.special_permits_details}
                       </p>
                     )}
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Frais spécifiques :</span>{" "}
                       {item.item_specific_fees || "0"} FCFA
                     </p>
@@ -1934,13 +1936,13 @@ const CollectionDetails = () => {
                       {item.is_seasonal_product ? "Oui" : "Non"}
                     </p> */}
                     {item.harvest_period && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Période de récolte :</span>{" "}
                         {item.harvest_period}
                       </p>
                     )}
                     {item.item_notes && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Notes :</span>{" "}
                         {item.item_notes}
                       </p>
@@ -1968,7 +1970,7 @@ const CollectionDetails = () => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="space-y-1">
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
                         Nom du service de contrôle :
                       </span>{" "}
@@ -1978,32 +1980,32 @@ const CollectionDetails = () => {
                           ? `Service ID: ${control.service_id}`
                           : "Non spécifié")}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Lieu du contrôle :</span>{" "}
                       {control.location}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Nombre de postes :</span>{" "}
                       {control.control_posts_count}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Frais payés :</span>{" "}
                       {control.fees_paid || "0"} FCFA
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Montant du paiement :</span>{" "}
                       {control.payment_amount || "0"} FCFA
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Durée :</span>{" "}
                       {control.control_duration || "Non spécifiée"}{" "}
                       {control.duration_type || ""}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Type de taxe :</span>{" "}
                       {control.taxType?.name || "Non spécifié"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Autre type de taxe :</span>{" "}
                       {control.other_tax_type || "Aucun"}
                     </p>
@@ -2021,33 +2023,33 @@ const CollectionDetails = () => {
                         {control.control_result || "Non spécifié"}
                       </span>
                     </p> */}
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Frais payés (Oui/Non) :</span>{" "}
                       {control.fees_paid_yes_no ? "Oui" : "Non"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">A un reçu :</span>{" "}
                       {control.has_receipt ? "Oui" : "Non"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Poste de paiement :</span>{" "}
                       {control.fees_payment_post || "Non spécifié"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Montant du paiement :</span>{" "}
                       {control.fees_payment_amount || "0"} FCFA
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Frais illégaux payés :</span>{" "}
                       {control.illegal_fees_paid ? "Oui" : "Non"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
                         Poste des frais illégaux :
                       </span>{" "}
                       {control.illegal_fees_post || "Aucun"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
                         Montant des frais illégaux :
                       </span>{" "}
@@ -2067,28 +2069,28 @@ const CollectionDetails = () => {
                       </span>{" "}
                       {control.knows_national_regulations ? "Oui" : "Non"}
                     </p> */}
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
                         Temps d'arrêt par type de poste :
                       </span>{" "}
                       {control.stop_time_per_post_type || "Non spécifié"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
                         Type de temps de passage frontière :
                       </span>{" "}
                       {control.border_crossing_time_type || "Non spécifié"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Problèmes :</span>{" "}
                       {control.control_issues || "Aucun"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Autres difficultés :</span>{" "}
                       {control.other_difficulties || "Aucune"}
                     </p>
                     {control.notes && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Notes :</span>{" "}
                         {control.notes}
                       </p>
@@ -2114,11 +2116,11 @@ const CollectionDetails = () => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="space-y-1">
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Action :</span>{" "}
                       {validation.validation_action}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Résultat :</span>
                       <span
                         className={`ml-1 px-2 py-1 rounded text-xs ${
@@ -2132,22 +2134,22 @@ const CollectionDetails = () => {
                         {validation.validation_result}
                       </span>
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Score de qualité :</span>{" "}
                       {validation.data_quality_score || "Non évalué"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Priorité :</span>{" "}
                       {validation.priority_level || "Non spécifié"}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-400">
+                    <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Soumis le :</span>{" "}
                       {validation.submitted_at
                         ? new Date(validation.submitted_at).toLocaleString()
                         : "Non spécifié"}
                     </p>
                     {validation.validated_at && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Validé le :</span>{" "}
                         {new Date(validation.validated_at).toLocaleString()}
                       </p>
@@ -2155,19 +2157,19 @@ const CollectionDetails = () => {
                   </div>
                   <div className="space-y-1">
                     {validation.validation_notes && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Notes :</span>{" "}
                         {validation.validation_notes}
                       </p>
                     )}
                     {validation.rejection_reason && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Raison du rejet :</span>{" "}
                         {validation.rejection_reason}
                       </p>
                     )}
                     {validation.correction_instructions && (
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">
                           Instructions de correction :
                         </span>{" "}
@@ -2206,7 +2208,7 @@ const CollectionDetails = () => {
         onHide={() => setShowValidationDialog(false)}
       >
         <div className="p-4 space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-800 dark:text-gray-400">
             Êtes-vous sûr de vouloir valider cette collecte ? Cette action ne
             peut pas être annulée.
           </p>
@@ -2218,8 +2220,11 @@ const CollectionDetails = () => {
               type="number"
               min="0"
               max="100"
-              value={dataQualityScore}
-              onChange={(e) => setDataQualityScore(Number(e.target.value))}
+              value={dataQualityScore === null ? "" : dataQualityScore}
+              onChange={(e) => {
+                const value = e.target.value;
+                setDataQualityScore(value === "" ? null : Number(value));
+              }}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Score de qualité (0-100)"
             />
@@ -2273,7 +2278,7 @@ const CollectionDetails = () => {
         onHide={() => setShowRejectDialog(false)}
       >
         <div className="p-4 space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-800 dark:text-gray-400">
             Êtes-vous sûr de vouloir rejeter cette collecte ? Cette action ne
             peut pas être annulée.
           </p>
