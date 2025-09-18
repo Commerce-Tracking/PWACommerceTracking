@@ -87,12 +87,12 @@ export default function SignInForm() {
               <div className="space-y-6">
                 <div>
                   <Label>
-                    Numéro de téléphone{" "}
+                    Email de l'utilisateur{" "}
                     <span className="text-error-500">*</span>{" "}
                   </Label>
                   <Input
-                    placeholder="XX XX XX XX"
-                    type={"text"}
+                    placeholder="exemple@email.com"
+                    type={"email"}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                   />
