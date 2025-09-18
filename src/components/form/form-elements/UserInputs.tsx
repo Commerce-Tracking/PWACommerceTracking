@@ -220,7 +220,7 @@ export default function UserInputs() {
             <Select
               options={roleOptions}
               placeholder={t('select_role')}
-              value={formData.roleId}
+              defaultValue={formData.roleId}
               onChange={handleSelectChange("roleId")}
               className="dark:bg-gray-900"
             />
@@ -231,7 +231,7 @@ export default function UserInputs() {
             <Select
               options={localityOptions}
               placeholder={t('select_locality')}
-              value={formData.localityId}
+              defaultValue={formData.localityId}
               onChange={handleSelectChange("localityId")}
               className="dark:bg-gray-900"
             />
@@ -243,7 +243,7 @@ export default function UserInputs() {
               selectPosition="start"
               countries={countries}
               placeholder="+228 00 00 00 00"
-              value={formData.phone}
+              defaultValue={formData.phone}
               onChange={handlePhoneNumberChange}
             />
           </div>
