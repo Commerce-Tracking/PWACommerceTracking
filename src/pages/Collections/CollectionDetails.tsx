@@ -1383,9 +1383,9 @@ const CollectionDetails = () => {
                 Information général de la collecte
               </h3>
               <div className="space-y-2">
-                <p className="text-gray-800 dark:text-gray-400">
+                {/* <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">ID :</span> {collection.id}
-                </p>
+                </p> */}
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Public ID :</span>{" "}
                   {collection.public_id}
