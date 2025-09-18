@@ -391,7 +391,7 @@ const CollectionsTableOne = () => {
           // Chef d'équipe : utiliser collection_status
           searchParams.collection_status = validationStatus;
           response = await axiosInstance.get<ApiResponse>(
-            "/api/trade-flow/collections/by-validation-status",
+            "/trade-flow/collections/by-validation-status",
             {
               params: searchParams,
             }
@@ -401,7 +401,7 @@ const CollectionsTableOne = () => {
           searchParams.validation_status = validationStatus;
           searchParams.validation_level = "2";
           response = await axiosInstance.get<ApiResponse>(
-            "/api/trade-flow/collections/by-validation-status",
+            "/trade-flow/collections/by-validation-status",
             {
               params: searchParams,
             }
@@ -421,7 +421,7 @@ const CollectionsTableOne = () => {
         }
 
         response = await axiosInstance.get<ApiResponse>(
-          "/api/trade-flow/agents/collections",
+          "/trade-flow/agents/collections",
           {
             params: searchParams,
           }
@@ -487,7 +487,7 @@ const CollectionsTableOne = () => {
             try {
               // Récupérer les informations de workflow pour avoir les statuts de validation complets
               const workflowResponse = await axiosInstance.get(
-                `/api/trade-flow/collections/${collection.id}/workflow`
+                `/trade-flow/collections/${collection.id}/workflow`
               );
 
               if (workflowResponse.data.success) {

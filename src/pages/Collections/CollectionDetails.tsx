@@ -602,7 +602,7 @@ const CollectionDetails = () => {
         // Récupérer les données de la collecte
         console.log(`Fetching collection data for ID: ${id}`);
         const collectionResponse = await axiosInstance.get(
-          `/api/trade-flow/digitalized-collections/${id}`
+          `/trade-flow/digitalized-collections/${id}`
         );
         console.log(
           "Données de la collecte:",
@@ -616,7 +616,7 @@ const CollectionDetails = () => {
           try {
             console.log(`Fetching workflow data for ID: ${id}`);
             const workflowResponse = await axiosInstance.get<WorkflowResponse>(
-              `/api/trade-flow/collections/${id}/workflow`
+              `/trade-flow/collections/${id}/workflow`
             );
             console.log(
               "Données du workflow:",
@@ -781,8 +781,8 @@ const CollectionDetails = () => {
       // Choisir l'endpoint selon le rôle
       const endpoint =
         userInfo?.role_id === 4
-          ? `/api/trade-flow/collections/${collection.id}/validate/team-manager/complete`
-          : `/api/trade-flow/collections/${collection.id}/validate/supervisor/complete`;
+          ? `/trade-flow/collections/${collection.id}/validate/team-manager/complete`
+          : `/trade-flow/collections/${collection.id}/validate/supervisor/complete`;
 
       const response = await axiosInstance.post<ValidationResponse>(
         endpoint,
@@ -804,7 +804,7 @@ const CollectionDetails = () => {
         // Recharger les données de la collecte
         console.log(`Reloading collection data for ID: ${collection.id}`);
         const collectionResponse = await axiosInstance.get(
-          `/api/trade-flow/digitalized-collections/${collection.id}`
+          `/trade-flow/digitalized-collections/${collection.id}`
         );
         console.log(
           "Données de la collecte après validation:",
@@ -818,7 +818,7 @@ const CollectionDetails = () => {
           try {
             console.log(`Reloading workflow data for ID: ${collection.id}`);
             const workflowResponse = await axiosInstance.get<WorkflowResponse>(
-              `/api/trade-flow/collections/${collection.id}/workflow`
+              `/trade-flow/collections/${collection.id}/workflow`
             );
             console.log(
               "Données du workflow après validation:",
@@ -927,12 +927,12 @@ const CollectionDetails = () => {
       );
       console.log(
         "URL de rejet:",
-        `/api/trade-flow/collections/${collection.id}/reject`
+        `/trade-flow/collections/${collection.id}/reject`
       );
       console.log("Raison du rejet:", rejectReason.trim());
 
       const response = await axiosInstance.post(
-        `/api/trade-flow/collections/${collection.id}/reject`,
+        `/trade-flow/collections/${collection.id}/reject`,
         requestData
       );
 
@@ -949,7 +949,7 @@ const CollectionDetails = () => {
         // Recharger les données de la collecte
         console.log(`Reloading collection data for ID: ${collection.id}`);
         const collectionResponse = await axiosInstance.get(
-          `/api/trade-flow/digitalized-collections/${collection.id}`
+          `/trade-flow/digitalized-collections/${collection.id}`
         );
 
         if (collectionResponse.data.success) {
@@ -958,7 +958,7 @@ const CollectionDetails = () => {
           // Recharger l'état du workflow
           try {
             const workflowResponse = await axiosInstance.get<WorkflowResponse>(
-              `/api/trade-flow/collections/${collection.id}/workflow`
+              `/trade-flow/collections/${collection.id}/workflow`
             );
 
             if (workflowResponse.data.success) {
@@ -1069,7 +1069,7 @@ const CollectionDetails = () => {
       );
 
       const response = await axiosInstance.post(
-        `/api/trade-flow/collections/${collection.id}/validate/supervisor/complete`,
+        `/trade-flow/collections/${collection.id}/validate/supervisor/complete`,
         requestData
       );
 
@@ -1089,7 +1089,7 @@ const CollectionDetails = () => {
         // Recharger les données de la collecte
         console.log(`Reloading collection data for ID: ${collection.id}`);
         const collectionResponse = await axiosInstance.get(
-          `/api/trade-flow/digitalized-collections/${collection.id}`
+          `/trade-flow/digitalized-collections/${collection.id}`
         );
 
         if (collectionResponse.data.success) {
@@ -1098,7 +1098,7 @@ const CollectionDetails = () => {
           // Recharger l'état du workflow
           try {
             const workflowResponse = await axiosInstance.get<WorkflowResponse>(
-              `/api/trade-flow/collections/${collection.id}/workflow`
+              `/trade-flow/collections/${collection.id}/workflow`
             );
 
             if (workflowResponse.data.success) {

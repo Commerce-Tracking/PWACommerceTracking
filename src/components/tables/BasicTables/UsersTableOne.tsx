@@ -61,7 +61,7 @@ const UsersTableOne = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const url = "/api/trade-flow/agents/assigned";
+        const url = "/trade-flow/agents/assigned";
         const params: Record<string, string> = {
           page: "1",
           limit: "10",

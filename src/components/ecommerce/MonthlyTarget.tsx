@@ -40,7 +40,7 @@ export default function MonthlyTarget() {
       try {
         const token = localStorage.getItem("accessToken");
         const res = await axiosInstance.get(
-          "/api/trade-flow/collections/counts/by-level",
+          "/trade-flow/collections/counts/by-level",
           {
             headers: {
               Authorization: `Bearer ${token}`,

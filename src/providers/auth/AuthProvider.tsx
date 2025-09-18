@@ -16,7 +16,7 @@ export default function AuthProvider({ children }) {
   // Fonction pour vérifier la validité du token
   const checkTokenValidity = useCallback(async (token: string) => {
     try {
-      const response = await axiosInstance.get("/api/auth/profile", {
+      const response = await axiosInstance.get("/auth/profile", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -61,14 +61,11 @@ export default function AuthProvider({ children }) {
 
             // Charger les données de profil depuis l'API
             try {
-              const profileResponse = await axiosInstance.get(
-                "/api/auth/profile",
-                {
-                  headers: {
-                    Authorization: `Bearer ${storedAccessToken}`,
-                  },
-                }
-              );
+              const profileResponse = await axiosInstance.get("/auth/profile", {
+                headers: {
+                  Authorization: `Bearer ${storedAccessToken}`,
+                },
+              });
               const profileData = profileResponse.data.result;
               setUserData(profileData);
               localStorage.setItem("userData", JSON.stringify(profileData));
@@ -119,7 +116,7 @@ export default function AuthProvider({ children }) {
 
   const login = async (phone, password, navigate) => {
     try {
-      const res = await axiosInstance.post("/api/auth/login", {
+      const res = await axiosInstance.post("/auth/login", {
         username: phone,
         password,
       });
@@ -157,7 +154,7 @@ export default function AuthProvider({ children }) {
 
         // Charger les données de profil après la connexion
         try {
-          const profileResponse = await axiosInstance.get("/api/auth/profile", {
+          const profileResponse = await axiosInstance.get("/auth/profile", {
             headers: {
               Authorization: `Bearer ${tokens.accessToken}`,
             },
@@ -193,7 +190,7 @@ export default function AuthProvider({ children }) {
   const authMe = async (id: any) => {
     try {
       console.log("Access Token", accessToken);
-      const user = await axiosInstance.get(`/api/auth/profile`, {
+      const user = await axiosInstance.get(`/auth/profile`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
