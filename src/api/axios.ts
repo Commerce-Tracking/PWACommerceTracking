@@ -1,8 +1,13 @@
 import axios from "axios";
 
-// const baseURL = "/api"; // Utiliser le proxy Vite
+// Configuration de l'URL de base selon l'environnement
+const baseURL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD
+    ? "https://gateway-api.dev.freetrade-ofr.com" // URL de production
+    : "/api"); // URL de développement (proxy Vite)
 
-const axiosInstance = axios.create({ baseURL: "" });
+const axiosInstance = axios.create({ baseURL });
 
 // Variable pour éviter les appels multiples de refresh
 let isRefreshing = false;
