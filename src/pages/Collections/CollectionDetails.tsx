@@ -591,8 +591,7 @@ const CollectionDetails = () => {
   const [showRejectDialog, setShowRejectDialog] = useState<boolean>(false);
   const [rejectReason, setRejectReason] = useState<string>("");
   const [isRejecting, setIsRejecting] = useState<boolean>(false);
-  const [isValidatingSupervisor, setIsValidatingSupervisor] =
-    useState<boolean>(false);
+  const [isResubmission, setIsResubmission] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCollection = async () => {
@@ -717,7 +716,16 @@ const CollectionDetails = () => {
             }
           }
 
+          console.log("=== DEBUG FINAL COLLECTION DATA ===");
+          console.log("collectionData:", collectionData);
+          console.log(
+            "collectionValidations:",
+            collectionData.collectionValidations
+          );
+          console.log("=== FIN DEBUG FINAL COLLECTION DATA ===");
+
           setCollection(collectionData);
+          setIsResubmission(false); // Réinitialiser le flag de resoumission
           setIsLoading(false);
         } else {
           console.error(
@@ -794,6 +802,19 @@ const CollectionDetails = () => {
       );
 
       if (response.data.success) {
+        // Vérifier si c'est une resoumission
+        const isResubmissionFlag =
+          (response.data.result as any)?.is_resubmission === true;
+        console.log("=== DETECTION RESOUMISSION ===");
+        console.log("is_resubmission flag:", isResubmissionFlag);
+        console.log("response.data.result:", response.data.result);
+        console.log("=== FIN DETECTION RESOUMISSION ===");
+
+        if (isResubmissionFlag) {
+          setIsResubmission(true);
+          console.log("Flag isResubmission défini à true");
+        }
+
         toast.current?.show({
           severity: "success",
           summary: "Validation réussie",
@@ -939,6 +960,19 @@ const CollectionDetails = () => {
       console.log("Réponse de rejet:", JSON.stringify(response.data, null, 2));
 
       if (response.data.success) {
+        // Vérifier si c'est une resoumission
+        const isResubmissionFlag =
+          (response.data.result as any)?.is_resubmission === true;
+        console.log("=== DETECTION RESOUMISSION (REJECT) ===");
+        console.log("is_resubmission flag:", isResubmissionFlag);
+        console.log("response.data.result:", response.data.result);
+        console.log("=== FIN DETECTION RESOUMISSION (REJECT) ===");
+
+        if (isResubmissionFlag) {
+          setIsResubmission(true);
+          console.log("Flag isResubmission défini à true (reject)");
+        }
+
         toast.current?.show({
           severity: "success",
           summary: "Collecte rejetée",
@@ -1050,7 +1084,7 @@ const CollectionDetails = () => {
     if (!collection || !userInfo) return;
 
     try {
-      setIsValidatingSupervisor(true);
+      setIsValidating(true);
 
       const requestData = {
         validation_notes:
@@ -1158,20 +1192,38 @@ const CollectionDetails = () => {
         life: 5000,
       });
     } finally {
-      setIsValidatingSupervisor(false);
+      setIsValidating(false);
     }
   };
 
   const canValidate = () => {
+    // Pour le chef d'équipe, vérifier si la collection peut être validée
+    // Prendre en compte la resoumission : si status = "submitted" et qu'il n'y a pas de validation courante approuvée
+    const hasCurrentApprovedValidation =
+      collection?.collectionValidations?.some(
+        (validation: any) =>
+          validation.validation_level === "1" &&
+          validation.validation_result === "approved" &&
+          validation.is_current_validation === 1
+      );
+
     const result =
       userInfo?.role_id === 4 &&
-      !collection?.validated_by_team_manager &&
-      collection?.validation_result !== "approved" &&
-      collection?.validation_result !== "rejected";
-    console.log("=== DEBUG canValidate ===");
-    console.log("userInfo:", userInfo);
-    console.log("userInfo?.role_id:", userInfo?.role_id);
-    console.log("collection:", collection);
+      collection?.status === "submitted" &&
+      (!hasCurrentApprovedValidation || isResubmission);
+
+    console.log("=== DEBUG canValidate (RESOUMISSION) ===");
+    console.log("userInfo?.role_id === 4:", userInfo?.role_id === 4);
+    console.log(
+      "collection?.status === 'submitted':",
+      collection?.status === "submitted"
+    );
+    console.log("hasCurrentApprovedValidation:", hasCurrentApprovedValidation);
+    console.log("isResubmission:", isResubmission);
+    console.log(
+      "collection?.collectionValidations:",
+      collection?.collectionValidations
+    );
     console.log(
       "collection?.validated_by_team_manager:",
       collection?.validated_by_team_manager
@@ -1180,54 +1232,114 @@ const CollectionDetails = () => {
       "collection?.validation_result:",
       collection?.validation_result
     );
-    console.log("collection?.validated_at:", collection?.validated_at);
-    console.log("collection?.status:", collection?.status);
-    console.log("Conditions individuelles:");
-    console.log("- userInfo?.role_id === 4:", userInfo?.role_id === 4);
-    console.log(
-      "- !collection?.validated_by_team_manager:",
-      !collection?.validated_by_team_manager
-    );
-    console.log(
-      "- collection?.validation_result !== 'approved':",
-      collection?.validation_result !== "approved"
-    );
-    console.log(
-      "- collection?.validation_result !== 'rejected':",
-      collection?.validation_result !== "rejected"
-    );
     console.log("canValidate result:", result);
     console.log("========================");
     return result;
   };
 
   const canSupervisorValidate = () => {
-    // Pour le superviseur, vérifier si la collecte est validée par le chef d'équipe
-    // et n'est pas encore validée ou rejetée par le superviseur
+    // Pour le superviseur, vérifier si la collecte peut être validée
+    // Prendre en compte la resoumission : si elle est validée par le chef d'équipe mais pas encore par le superviseur
+
+    // Vérification de sécurité
+    if (
+      !collection?.collectionValidations ||
+      collection.collectionValidations.length === 0
+    ) {
+      console.log(
+        "=== DEBUG canSupervisorValidate: Pas de collectionValidations ==="
+      );
+      console.log(
+        "collection?.collectionValidations:",
+        collection?.collectionValidations
+      );
+
+      // Fallback: utiliser les anciennes propriétés si collectionValidations n'est pas disponible
+      const hasTeamManagerApproval = collection?.validated_by_team_manager;
+      const hasCurrentSupervisorValidation =
+        collection?.validated_by_supervisor;
+
+      const result =
+        userInfo?.role_id === 5 &&
+        hasTeamManagerApproval &&
+        !hasCurrentSupervisorValidation;
+
+      console.log("=== FALLBACK LOGIC ===");
+      console.log("hasTeamManagerApproval (fallback):", hasTeamManagerApproval);
+      console.log(
+        "hasCurrentSupervisorValidation (fallback):",
+        hasCurrentSupervisorValidation
+      );
+      console.log("Résultat final (fallback):", result);
+      console.log("=== FIN FALLBACK LOGIC ===");
+
+      return result;
+    }
+
+    // Vérifier si le chef d'équipe a approuvé (validation courante ou historique)
+    const hasTeamManagerApproval = collection?.collectionValidations?.some(
+      (validation: any) =>
+        validation.validation_level === "1" &&
+        validation.validation_result === "approved"
+    );
+
+    // Vérifier s'il y a une validation superviseur courante ET résolue (approved ou rejected)
+    const hasCurrentSupervisorValidation =
+      collection?.collectionValidations?.some(
+        (validation: any) =>
+          validation.validation_level === "2" &&
+          validation.is_current_validation === 1 &&
+          (validation.validation_result === "approved" ||
+            validation.validation_result === "rejected")
+      );
+
+    // Le superviseur peut valider si :
+    // 1. Il est superviseur (role_id === 5)
+    // 2. Le chef d'équipe a approuvé (à un moment donné)
+    // 3. Il n'y a pas de validation superviseur courante en cours OU c'est une resoumission
     const result =
       userInfo?.role_id === 5 &&
-      collection?.validated_by_team_manager &&
-      collection?.validation_result === "approved" &&
-      !collection?.validated_by_supervisor &&
-      collection?.supervisor_validation_result !== "rejected";
+      hasTeamManagerApproval &&
+      (!hasCurrentSupervisorValidation || isResubmission);
 
-    console.log("=== DEBUG canSupervisorValidate ===");
+    console.log("=== DEBUG canSupervisorValidate (RESOUMISSION) ===");
     console.log("userInfo?.role_id === 5:", userInfo?.role_id === 5);
+    console.log("hasTeamManagerApproval:", hasTeamManagerApproval);
+    console.log(
+      "hasCurrentSupervisorValidation:",
+      hasCurrentSupervisorValidation
+    );
+    console.log("isResubmission:", isResubmission);
+    console.log(
+      "collection?.collectionValidations:",
+      collection?.collectionValidations
+    );
+
+    // Debug détaillé des validations
+    if (collection?.collectionValidations) {
+      collection.collectionValidations.forEach(
+        (validation: any, index: number) => {
+          console.log(`Validation ${index}:`, {
+            validation_level: validation.validation_level,
+            validation_result: validation.validation_result,
+            is_current_validation: validation.is_current_validation,
+            validated_at: validation.validated_at,
+          });
+        }
+      );
+    }
+
     console.log(
       "collection?.validated_by_team_manager:",
       collection?.validated_by_team_manager
     );
     console.log(
-      "collection?.validation_result === 'approved':",
-      collection?.validation_result === "approved"
+      "collection?.validated_by_supervisor:",
+      collection?.validated_by_supervisor
     );
     console.log(
-      "!collection?.validated_by_supervisor:",
-      !collection?.validated_by_supervisor
-    );
-    console.log(
-      "collection?.supervisor_validation_result !== 'rejected':",
-      collection?.supervisor_validation_result !== "rejected"
+      "collection?.supervisor_validation_result:",
+      collection?.supervisor_validation_result
     );
     console.log("Résultat final:", result);
     console.log("=== FIN DEBUG canSupervisorValidate ===");
@@ -1303,7 +1415,12 @@ const CollectionDetails = () => {
               </>
             )}
             {userInfo?.role_id === 4 &&
-              collection.validated_by_team_manager && (
+              collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "1" &&
+                  validation.validation_result === "approved" &&
+                  validation.is_current_validation === 1
+              ) && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-green-100 text-green-800 rounded-lg w-full sm:w-auto">
                   <i className="pi pi-check-circle text-green-600"></i>
                   <span className="text-sm font-bold">
@@ -1312,15 +1429,29 @@ const CollectionDetails = () => {
                 </div>
               )}
             {userInfo?.role_id === 4 &&
-              collection?.validation_result === "rejected" && (
+              collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "1" &&
+                  validation.validation_result === "rejected" &&
+                  validation.is_current_validation === 1
+              ) && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-800 rounded-lg w-full sm:w-auto">
                   <i className="pi pi-times-circle text-red-600"></i>
                   <span className="text-sm font-bold">Collecte rejetée</span>
                 </div>
               )}
             {userInfo?.role_id === 5 &&
-              collection.validated_by_team_manager &&
-              !collection.validated_by_supervisor && (
+              collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "1" &&
+                  validation.validation_result === "approved" &&
+                  validation.is_current_validation === 1
+              ) &&
+              !collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "2" &&
+                  validation.is_current_validation === 1
+              ) && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg w-full sm:w-auto">
                   <i className="pi pi-clock text-yellow-600"></i>
                   <div className="flex flex-col">
@@ -1337,7 +1468,12 @@ const CollectionDetails = () => {
                 </div>
               )}
             {userInfo?.role_id === 5 &&
-              collection.supervisor_validation_result === "rejected" && (
+              collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "2" &&
+                  validation.validation_result === "rejected" &&
+                  validation.is_current_validation === 1
+              ) && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-800 rounded-lg w-full sm:w-auto">
                   <i className="pi pi-times-circle text-red-600"></i>
                   <div className="flex flex-col">
@@ -1355,24 +1491,30 @@ const CollectionDetails = () => {
                   </div>
                 </div>
               )}
-            {userInfo?.role_id === 5 && collection.validated_by_supervisor && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg w-full sm:w-auto">
-                <i className="pi pi-check-circle text-blue-600"></i>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold">
-                    Collecte validée par le superviseur
-                  </span>
-                  {collection.supervisor_validated_at && (
-                    <span className="text-xs text-blue-600">
-                      Validée le{" "}
-                      {new Date(
-                        collection.supervisor_validated_at
-                      ).toLocaleDateString()}
+            {userInfo?.role_id === 5 &&
+              collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "2" &&
+                  validation.validation_result === "approved" &&
+                  validation.is_current_validation === 1
+              ) && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg w-full sm:w-auto">
+                  <i className="pi pi-check-circle text-blue-600"></i>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold">
+                      Collecte validée par le superviseur
                     </span>
-                  )}
+                    {collection.supervisor_validated_at && (
+                      <span className="text-xs text-blue-600">
+                        Validée le{" "}
+                        {new Date(
+                          collection.supervisor_validated_at
+                        ).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </div>
 
@@ -1383,9 +1525,9 @@ const CollectionDetails = () => {
                 Information général de la collecte
               </h3>
               <div className="space-y-2">
-                {/* <p className="text-gray-800 dark:text-gray-400">
+                <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">ID :</span> {collection.id}
-                </p> */}
+                </p>
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Public ID :</span>{" "}
                   {collection.public_id}

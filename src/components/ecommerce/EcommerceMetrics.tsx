@@ -143,7 +143,7 @@ export default function EcommerceMetrics() {
               {metrics.firstCard.value.toLocaleString()}
             </h4>
           </div>
-          <Badge color={metrics.firstCard.color}>Voir tout</Badge>
+          {/* <Badge color={metrics.firstCard.color}>Voir tout</Badge> */}
         </div>
       </div>
 
@@ -161,7 +161,7 @@ export default function EcommerceMetrics() {
               {metrics.secondCard.value.toLocaleString()}
             </h4>
           </div>
-          <Badge color={metrics.secondCard.color}>Voir tout</Badge>
+          {/* <Badge color={metrics.secondCard.color}>Voir tout</Badge> */}
         </div>
       </div>
     </div>
