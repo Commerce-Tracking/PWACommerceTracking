@@ -3,6 +3,7 @@ import { FileIcon, ListIcon } from "../../icons";
 import Badge from "../ui/badge/Badge";
 import axiosInstance from "../../api/axios";
 import useAuth from "../../providers/auth/useAuth";
+import { useTranslation } from "react-i18next";
 
 interface CollectionStats {
   submitted_by_collector: number;
@@ -19,6 +20,7 @@ interface CollectionStats {
 export default function EcommerceMetrics() {
   const auth = useAuth();
   const userInfo = auth?.userInfo;
+  const { t } = useTranslation();
   const [stats, setStats] = useState<CollectionStats>({
     submitted_by_collector: 0,
     validated_by_team_manager: 0,
@@ -48,10 +50,7 @@ export default function EcommerceMetrics() {
           setStats(res.data.result);
         }
       } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des statistiques des collectes :",
-          error
-        );
+        console.error(t("error_fetching_collection_stats"), error);
       }
     };
 
@@ -66,7 +65,7 @@ export default function EcommerceMetrics() {
       // Superviseur
       return {
         firstCard: {
-          title: "À valider (Chef d'équipe)",
+          title: t("to_validate_team_manager"),
           value: stats.validated_by_team_manager,
           color: "warning" as const,
           icon: (
@@ -74,7 +73,7 @@ export default function EcommerceMetrics() {
           ),
         },
         secondCard: {
-          title: "Collectes validées",
+          title: t("validated_collections"),
           value: stats.validated_by_supervisor,
           color: "success" as const,
           icon: (
@@ -86,7 +85,7 @@ export default function EcommerceMetrics() {
       // Chef d'équipe
       return {
         firstCard: {
-          title: "Collectes soumises",
+          title: t("submitted_collections"),
           value: stats.submitted_by_collector,
           color: "warning" as const,
           icon: (
@@ -94,7 +93,7 @@ export default function EcommerceMetrics() {
           ),
         },
         secondCard: {
-          title: "Collectes validées",
+          title: t("validated_collections"),
           value: stats.validated_by_team_manager,
           color: "success" as const,
           icon: (
@@ -106,7 +105,7 @@ export default function EcommerceMetrics() {
       // Par défaut (autres rôles)
       return {
         firstCard: {
-          title: "Total collectes",
+          title: t("total_collections"),
           value: stats.total_submitted + stats.total_validated,
           color: "info" as const,
           icon: (
@@ -114,7 +113,7 @@ export default function EcommerceMetrics() {
           ),
         },
         secondCard: {
-          title: "Total rejetées",
+          title: t("total_rejected"),
           value: stats.total_rejected,
           color: "error" as const,
           icon: (

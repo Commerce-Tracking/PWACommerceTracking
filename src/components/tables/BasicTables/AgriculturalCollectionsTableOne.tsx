@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Toast } from "primereact/toast";
@@ -333,6 +333,8 @@ const AgriculturalCollectionsTableOne = () => {
   const toast = useRef<Toast>(null);
   const navigate = useNavigate();
   const { userInfo } = useAuth();
+  const { t, i18n } = useTranslation();
+  const [, forceUpdate] = useState({});
 
   // Fonction pour récupérer les collectes agricoles
   const fetchData = async () => {
@@ -596,6 +598,11 @@ const AgriculturalCollectionsTableOne = () => {
     fetchData();
   }, [currentPage, rowsPerPage, globalFilter, validationStatus]);
 
+  // Force le re-rendu quand la langue change
+  useEffect(() => {
+    forceUpdate({});
+  }, [i18n.language]);
+
   const handleViewDetails = (collection: Collection) => {
     // Passer les données de la collecte via l'état de navigation
     navigate(`/collection/${collection.id}`, {
@@ -622,8 +629,6 @@ const AgriculturalCollectionsTableOne = () => {
       setCurrentPage(1);
     }
   };
-
-  const { t, i18n } = useTranslation();
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -910,16 +915,20 @@ const AgriculturalCollectionsTableOne = () => {
     );
   };
 
-  const actionBodyTemplate = (rowData: Collection) => {
-    return (
-      <button
-        onClick={() => handleViewDetails(rowData)}
-        className="px-3 py-1 text-sm text-white bg-green-600 rounded hover:bg-green-700 transition-colors"
-      >
-        {t("see_details")}
-      </button>
-    );
-  };
+  const actionBodyTemplate = useMemo(() => {
+    return (rowData: Collection) => {
+      const currentLang = i18n.language;
+      return (
+        <button
+          onClick={() => handleViewDetails(rowData)}
+          className="px-3 py-1 text-sm text-white bg-green-600 rounded hover:bg-green-700 transition-colors"
+          key={`${rowData.id}-${currentLang}`}
+        >
+          {t("see_details")}
+        </button>
+      );
+    };
+  }, [i18n.language, t]);
 
   if (isLoading) {
     return <div>Chargement...</div>;
@@ -988,6 +997,7 @@ const AgriculturalCollectionsTableOne = () => {
           </div>
         )}
         <DataTable
+          key={`datatable-${i18n.language}`}
           value={tableData}
           loading={isLoading}
           responsiveLayout="scroll"

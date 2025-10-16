@@ -6,10 +6,12 @@ import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
 import PageMeta from "../../components/common/PageMeta";
 import useAuth from "../../providers/auth/useAuth.ts";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function Home() {
   // @ts-ignore
   const { userInfo, userData, authMe } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     authMe(userInfo.id);
@@ -19,15 +21,13 @@ export default function Home() {
   return (
     <div className="page-container">
       <PageMeta
-        title="OFR | Admin"
-        description="Opération Fluidité Routière Agro-bétail"
+        title={t("dashboard_title")}
+        description={t("dashboard_description")}
       />
 
       <div className="page-header">
-        <h1 className="page-title">Tableau de Bord</h1>
-        <p className="page-subtitle">
-          Vue d'ensemble de vos activités et statistiques
-        </p>
+        <h1 className="page-title">{t("dashboard")}</h1>
+        <p className="page-subtitle">{t("dashboard_subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-12 gap-4 md:gap-6">

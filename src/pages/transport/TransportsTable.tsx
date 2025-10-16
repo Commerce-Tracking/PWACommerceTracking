@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Toast } from "primereact/toast";
@@ -107,11 +107,12 @@ const TransportsTable = () => {
   const toast = useRef<Toast>(null);
   const navigate = useNavigate();
 
-   const { t, i18n } = useTranslation();
-  
-    const changeLanguage = (lng: string) => {
-      i18n.changeLanguage(lng);
-    };
+  const { t, i18n } = useTranslation();
+  const [, forceUpdate] = useState({});
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
 
   // Récupérer la liste des transports avec pagination
   const fetchTransports = async (page: number = 1, limit: number = 10) => {
@@ -170,6 +171,11 @@ const TransportsTable = () => {
     fetchTransports(currentPage, rowsPerPage);
   }, [navigate, currentPage, rowsPerPage]);
 
+  // Force le re-rendu quand la langue change
+  useEffect(() => {
+    forceUpdate({});
+  }, [i18n.language]);
+
   // Gestion de la pagination
   const onPageChange = (event: any) => {
     setCurrentPage(event.page + 1);
@@ -188,15 +194,19 @@ const TransportsTable = () => {
   };
 
   // Template pour les actions
-  const actionBodyTemplate = (rowData: Transport) => {
-    return (
-      <Button
-        label="Voir"
-        className="p-button-sm p-button-primary"
-        onClick={() => handleViewDetails(rowData)}
-      />
-    );
-  };
+  const actionBodyTemplate = useMemo(() => {
+    return (rowData: Transport) => {
+      const currentLang = i18n.language;
+      return (
+        <Button
+          label={t("view")}
+          className="p-button-sm p-button-primary"
+          onClick={() => handleViewDetails(rowData)}
+          key={`${rowData.id}-${currentLang}`}
+        />
+      );
+    };
+  }, [i18n.language, t]);
   if (isLoading) {
     return <div>Chargement...</div>;
   }
@@ -205,81 +215,82 @@ const TransportsTable = () => {
     return <div>Erreur : {error}</div>;
   }
 
- 
-
   return (
     <div className="page-container">
       <div className="page-header">
         <h1 className="page-title">Gestion des Transports</h1>
-        <p className="page-subtitle">Liste et suivi des transports de marchandises</p>
+        <p className="page-subtitle">
+          Liste et suivi des transports de marchandises
+        </p>
       </div>
-      
+
       <div className="content-card">
         <div className="content-card-header">
-          <h2 className="content-card-title">{t('transport_list')}</h2>
+          <h2 className="content-card-title">{t("transport_list")}</h2>
         </div>
         <div className="content-card-body">
-        <DataTable
-          value={transports}
-          loading={isLoading}
-          responsiveLayout="scroll"
-          showGridlines
-          rows={rowsPerPage}
-          first={(currentPage - 1) * rowsPerPage}
-          totalRecords={totalRecords}
-          onPage={onPageChange}
-          filterDisplay="row"
-          globalFilterFields={[
-            "loadingNumber",
-            "productLabel",
-            "loadingCountry",
-            "unloadingCountry",
-          ]}
-          emptyMessage="Aucun transport trouvé."
-          paginator
-          rowsPerPageOptions={[5, 10, 25]}
-          tableStyle={{ minWidth: "50rem" }}
-          className="p-datatable-sm"
-        >
-          <Column
-            field="loadingNumber"
-            header={t('loading_number')}
-            filter
-            filterPlaceholder="Rechercher par numéro"
-            style={{ width: "25%" }}
-          />
-          <Column
-            field="productLabel"
-            header={t('product')}
-            filter
-            filterPlaceholder="Rechercher par produit"
-            style={{ width: "25%" }}
-          />
-          <Column
-            field="loadingCountry"
-            header={t('loading_country')}
-            filter
-            filterPlaceholder="Rechercher par pays"
-            style={{ width: "20%" }}
-          />
-          <Column
-            field="unloadingCountry"
-            header={t('unloading_country')}
-            filter
-            filterPlaceholder="Rechercher par pays"
-            style={{ width: "20%" }}
-          />
-          <Column
-            header={t('actions')}
-            body={actionBodyTemplate}
-            style={{ width: "10%" }}
-          />
-        </DataTable>
+          <DataTable
+            key={`datatable-${i18n.language}`}
+            value={transports}
+            loading={isLoading}
+            responsiveLayout="scroll"
+            showGridlines
+            rows={rowsPerPage}
+            first={(currentPage - 1) * rowsPerPage}
+            totalRecords={totalRecords}
+            onPage={onPageChange}
+            filterDisplay="row"
+            globalFilterFields={[
+              "loadingNumber",
+              "productLabel",
+              "loadingCountry",
+              "unloadingCountry",
+            ]}
+            emptyMessage="Aucun transport trouvé."
+            paginator
+            rowsPerPageOptions={[5, 10, 25]}
+            tableStyle={{ minWidth: "50rem" }}
+            className="p-datatable-sm"
+          >
+            <Column
+              field="loadingNumber"
+              header={t("loading_number")}
+              filter
+              filterPlaceholder="Rechercher par numéro"
+              style={{ width: "25%" }}
+            />
+            <Column
+              field="productLabel"
+              header={t("product")}
+              filter
+              filterPlaceholder="Rechercher par produit"
+              style={{ width: "25%" }}
+            />
+            <Column
+              field="loadingCountry"
+              header={t("loading_country")}
+              filter
+              filterPlaceholder="Rechercher par pays"
+              style={{ width: "20%" }}
+            />
+            <Column
+              field="unloadingCountry"
+              header={t("unloading_country")}
+              filter
+              filterPlaceholder="Rechercher par pays"
+              style={{ width: "20%" }}
+            />
+            <Column
+              header={t("actions")}
+              body={actionBodyTemplate}
+              style={{ width: "10%" }}
+            />
+          </DataTable>
         </div>
       </div>
       <Dialog
         visible={isModalVisible}
-        header={t('transport_details')}
+        header={t("transport_details")}
         modal
         style={{ width: "40rem" }}
         onHide={handleCloseModal}
@@ -287,137 +298,143 @@ const TransportsTable = () => {
         {selectedTransport && (
           <div className="p-4 space-y-2">
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('loading_number')} :</span>{" "}
+              <span className="font-medium">{t("loading_number")} :</span>{" "}
               {selectedTransport.loadingNumber}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('product')} :</span>{" "}
+              <span className="font-medium">{t("product")} :</span>{" "}
               {selectedTransport.productLabel}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('quantity')} :</span>{" "}
+              <span className="font-medium">{t("quantity")} :</span>{" "}
               {selectedTransport.productQuantity}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('average_weight')} :</span>{" "}
+              <span className="font-medium">{t("average_weight")} :</span>{" "}
               {selectedTransport.averageWeightKg}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('average_unit_price')} :</span>{" "}
+              <span className="font-medium">{t("average_unit_price")} :</span>{" "}
               {selectedTransport.averageUnitPrice} {selectedTransport.currency}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium"> {t('total_value')} :</span>{" "}
+              <span className="font-medium"> {t("total_value")} :</span>{" "}
               {selectedTransport.totalProductValue} {selectedTransport.currency}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('loading_point')} :</span>{" "}
+              <span className="font-medium">{t("loading_point")} :</span>{" "}
               {selectedTransport.loadingPoint}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('loading_country')} :</span>{" "}
+              <span className="font-medium">{t("loading_country")} :</span>{" "}
               {selectedTransport.loadingCountry}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('unloading_point')}:</span>{" "}
+              <span className="font-medium">{t("unloading_point")}:</span>{" "}
               {selectedTransport.unloadingPoint}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('unloading_country')} :</span>{" "}
+              <span className="font-medium">{t("unloading_country")} :</span>{" "}
               {selectedTransport.unloadingCountry}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('shipper')} :</span>{" "}
+              <span className="font-medium">{t("shipper")} :</span>{" "}
               {selectedTransport.chargerFirstName}{" "}
               {selectedTransport.chargerLastName}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium"> {t('shipper_phone')} :</span>{" "}
+              <span className="font-medium"> {t("shipper_phone")} :</span>{" "}
               {selectedTransport.chargerPhone}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('license_plate')} :</span>{" "}
+              <span className="font-medium">{t("license_plate")} :</span>{" "}
               {selectedTransport.vehiclePlateNumber}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('license_number')} :</span>{" "}
+              <span className="font-medium">{t("license_number")} :</span>{" "}
               {selectedTransport.drivingLicenseNumber}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('license_valid')} :</span>{" "}
+              <span className="font-medium">{t("license_valid")} :</span>{" "}
               {selectedTransport.drivingLicenseValid ? "Oui" : "Non"}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('license_expiration')} :</span>{" "}
+              <span className="font-medium">{t("license_expiration")} :</span>{" "}
               {new Date(
                 selectedTransport.drivingLicenseExpiry
               ).toLocaleDateString()}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('registration_card')} :</span>{" "}
+              <span className="font-medium">{t("registration_card")} :</span>{" "}
               {selectedTransport.greyCardNumber}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('registration_valid')} :</span>{" "}
+              <span className="font-medium">{t("registration_valid")} :</span>{" "}
               {selectedTransport.greyCardValid ? "Oui" : "Non"}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('registration_expiration')} :</span>{" "}
+              <span className="font-medium">
+                {t("registration_expiration")} :
+              </span>{" "}
               {new Date(selectedTransport.greyCardExpiry).toLocaleDateString()}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('insurance')} :</span>{" "}
+              <span className="font-medium">{t("insurance")} :</span>{" "}
               {selectedTransport.insuranceNumber}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('insurance_valid')} :</span>{" "}
+              <span className="font-medium">{t("insurance_valid")} :</span>{" "}
               {selectedTransport.insuranceValid ? "Oui" : "Non"}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('insurance_expiration')} :</span>{" "}
+              <span className="font-medium">{t("insurance_expiration")} :</span>{" "}
               {new Date(selectedTransport.insuranceExpiry).toLocaleDateString()}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('export_declaration')} :</span>{" "}
+              <span className="font-medium">{t("export_declaration")} :</span>{" "}
               {selectedTransport.exportDeclarationNumber}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('declaration_valid')} :</span>{" "}
+              <span className="font-medium">{t("declaration_valid")} :</span>{" "}
               {selectedTransport.exportDeclarationValid ? "Oui" : "Non"}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('declaration_expiration')}:</span>{" "}
+              <span className="font-medium">
+                {t("declaration_expiration")}:
+              </span>{" "}
               {new Date(
                 selectedTransport.exportDeclarationExpiry
               ).toLocaleDateString()}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('people_on_board')}:</span>{" "}
+              <span className="font-medium">{t("people_on_board")}:</span>{" "}
               {selectedTransport.peopleOnBoard}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('document_type')} :</span>{" "}
+              <span className="font-medium">{t("document_type")} :</span>{" "}
               {selectedTransport.idDocumentType}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('document_reference')} :</span>{" "}
+              <span className="font-medium">{t("document_reference")} :</span>{" "}
               {selectedTransport.idDocumentRef}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('country')} :</span>{" "}
+              <span className="font-medium">{t("country")} :</span>{" "}
               {selectedTransport.country.name}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('locality')} :</span>{" "}
+              <span className="font-medium">{t("locality")} :</span>{" "}
               {selectedTransport.locality.name}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('user')} :</span>{" "}
+              <span className="font-medium">{t("user")} :</span>{" "}
               {selectedTransport.user.firstname}{" "}
               {selectedTransport.user.lastname} ({selectedTransport.user.email})
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('additional_passengers')} :</span>
+              <span className="font-medium">
+                {t("additional_passengers")} :
+              </span>
               {selectedTransport.additionalPassengers.length > 0 ? (
                 <ul className="list-disc pl-5">
                   {selectedTransport.additionalPassengers.map((passenger) => (
@@ -432,7 +449,7 @@ const TransportsTable = () => {
               )}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">{t('attachments')} :</span>
+              <span className="font-medium">{t("attachments")} :</span>
               {selectedTransport.TransportAttachment.length > 0 ? (
                 <ul className="list-disc pl-5">
                   {selectedTransport.TransportAttachment.map((attachment) => (

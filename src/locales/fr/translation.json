@@ -272,7 +272,6 @@
   "tax_amount": "Montant des taxes",
   "gps_coordinates": "Coordonnées GPS",
   "control_posts": "Postes de contrôle",
-  "control_posts_count": "Nombre de postes",
   "control_locations": "Lieux de contrôle",
   "control_duration_type": "Type de durée de contrôle",
   "control_duration_value": "Durée de contrôle",
@@ -349,5 +348,33 @@
   "animal_category_large": "Grand",
 
   "animal_head_unit": "tête(s)",
-  "animal_price_at": "à"
+  "animal_price_at": "à",
+
+  "dashboard_title": "OFR | Admin",
+  "dashboard_description": "Opération Fluidité Routière Agro-bétail",
+  "dashboard_subtitle": "Vue d'ensemble de vos activités et statistiques",
+
+  "error_fetching_collection_stats": "Erreur lors de la récupération des statistiques des collectes :",
+  "loading": "Chargement...",
+
+  "to_validate_team_manager": "À valider (Chef d'équipe)",
+  "validated_collections": "Collectes validées",
+  "submitted_collections": "Collectes soumises",
+  "total_collections": "Total collectes",
+  "total_rejected": "Total rejetées",
+
+  "collection_summary": "Bilan des collectes",
+  "processed_collections_message": "Vous avez traité {{count}} collectes, continuez votre bon travail!",
+  "processed_collections": "Collectes traitées",
+  "rejected_collections": "Collectes rejetées",
+
+  "view_details": "Voir détails",
+  "error": "Erreur",
+  "retry": "Réessayer",
+  "no_assigned_agents_found": "Aucun agent assigné trouvé.",
+  "search_by_name": "Rechercher par nom",
+  "search_by_phone": "Rechercher par téléphone",
+  "search_by_email": "Rechercher par email",
+  "collection": "Collecte",
+  "last_activity": "Dernière activité"
 }
