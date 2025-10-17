@@ -21,7 +21,7 @@
 
   "obstacles": "Entraves",
   "obstacle_list": "Liste des entraves",
-  "description": "Description",
+
   "status": "Statut",
   "date": "Date",
   "date_creation": "Date de création",
@@ -34,11 +34,11 @@
   "amount": "Montant",
   "user": "Utilisateur",
   "country_obstacles": "Pays",
-  "locality": "Localité",
+
   "complaint_type": "Type de plainte",
   "service": "Service",
   "loading_number": "Numéro de chargement",
-  "product": "Produit",
+
 
   "obstacles_list": "Liste des types d'entraves",
   "obstacles_name": "Nom du type d'entrave",
@@ -49,7 +49,7 @@
   "user_list": "Liste des utilisateurs",
   "assigned_agents": "Agents assignés",
   "assigned_team_managers": "Chef d'équipe assignés",
-  "validations": "Validations",
+
   "collections": "Collections",
   "team_manager_details": "Détails du chef d'équipe",
   "agent": "Agent",
@@ -58,9 +58,7 @@
   "livestock_collections": "Collectes de bétail",
   "agricultural_collections": "Collectes agricoles",
   "validated_collections_by_team_managers": "Collectes validées par chefs d'équipe",
-  "collection_details": "Détails de la collecte",
-  "collector": "Collecteur",
-  "collection_type": "Type de collecte",
+
   "origin": "Origine",
   "destination": "Destination",
   "create_user": "Créer un utilisateur",
@@ -135,15 +133,13 @@
   "reporting_details": "Reporting details",
   "Attachements": "Attachements",
 
-  "loading_country": "Pays de chargement",
-  "unloading_country": "Pays de déchargement",
+
   "actions": "Actions",
   "transport_details": "Détails du transport",
 
-  "quantity": "Quantité",
-  "average_weight": "Poids moyen (kg)",
+
   "average_unit_price": "Prix unitaire moyen",
-  "total_value": "Valeur totale",
+
   "loading_point": "Point de chargement",
 
   "unloading_point": "Point de déchargement",
@@ -178,7 +174,7 @@
 
   "edit_entity": "Modifier l'entité",
   "entity_name": "Nom de l'entité",
-  "cancel": "Annuler",
+
   "save": "Enregistrer",
 
   "entity_form_title": "Formulaire d'ajout d'entité",
