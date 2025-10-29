@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Toast } from "primereact/toast";
@@ -38,7 +38,8 @@ interface ApiResponse {
 
 const UsersTableOne = () => {
   const { userInfo } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [, forceUpdate] = useState({});
   const [tableData, setTableData] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +62,7 @@ const UsersTableOne = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const url = "/api/trade-flow/agents/assigned";
+        const url = "/trade-flow/agents/assigned";
         const params: Record<string, string> = {
           page: "1",
           limit: "10",
@@ -162,6 +163,11 @@ const UsersTableOne = () => {
     fetchData();
   }, []);
 
+  // Force le re-rendu quand la langue change
+  useEffect(() => {
+    forceUpdate({});
+  }, [i18n.language]);
+
   const handleViewDetails = (agent: Agent) => {
     setSelectedAgent(agent);
     setTimeout(() => setIsModalVisible(true), 10);
@@ -177,25 +183,28 @@ const UsersTableOne = () => {
     setRowsPerPage(event.rows);
   };
 
-  const { i18n } = useTranslation();
-
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
   };
 
-  const actionBodyTemplate = (rowData: Agent) => {
-    return (
-      <button
-        onClick={() => handleViewDetails(rowData)}
-        className="px-3 py-1 text-sm text-white bg-green-600 rounded"
-      >
-        Voir détails
-      </button>
-    );
-  };
+  const actionBodyTemplate = useMemo(() => {
+    return (rowData: Agent) => {
+      // Forcer le re-rendu en utilisant la langue actuelle
+      const currentLang = i18n.language;
+      return (
+        <button
+          onClick={() => handleViewDetails(rowData)}
+          className="px-3 py-1 text-sm text-white bg-green-600 rounded"
+          key={`${rowData.id}-${currentLang}`}
+        >
+          {t("view_details")}
+        </button>
+      );
+    };
+  }, [i18n.language, t]);
 
   if (isLoading) {
-    return <div>Chargement...</div>;
+    return <div>{t("loading")}</div>;
   }
 
   if (error) {
@@ -203,13 +212,13 @@ const UsersTableOne = () => {
       <div className="p-4 text-center">
         <div className="mb-4">
           <p className="text-red-600 dark:text-red-400 mb-2">
-            Erreur : {error}
+            {t("error")} : {error}
           </p>
           <button
             onClick={() => window.location.reload()}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
-            Réessayer
+            {t("retry")}
           </button>
         </div>
       </div>
@@ -220,6 +229,7 @@ const UsersTableOne = () => {
     <div className="p-4">
       <ComponentCard title={getTableTitle()}>
         <DataTable
+          key={`datatable-${i18n.language}`}
           value={tableData}
           loading={isLoading}
           responsiveLayout="scroll"
@@ -230,7 +240,7 @@ const UsersTableOne = () => {
           onPage={onPageChange}
           filterDisplay="row"
           globalFilterFields={["name", "phone", "email"]}
-          emptyMessage="Aucun agent assigné trouvé."
+          emptyMessage={t("no_assigned_agents_found")}
           paginator
           rowsPerPageOptions={[5, 10, 25]}
           tableStyle={{ minWidth: "50rem" }}
@@ -241,21 +251,21 @@ const UsersTableOne = () => {
             header={t("name")}
             body={(rowData) => `${rowData.first_name} ${rowData.last_name}`}
             filter
-            filterPlaceholder="Rechercher par nom"
+            filterPlaceholder={t("search_by_name")}
             style={{ width: "25%" }}
           />
           <Column
             field="phone"
             header={t("phone")}
             filter
-            filterPlaceholder="Rechercher par téléphone"
+            filterPlaceholder={t("search_by_phone")}
             style={{ width: "20%" }}
           />
           <Column
             field="email"
             header={t("email")}
             filter
-            filterPlaceholder="Rechercher par email"
+            filterPlaceholder={t("search_by_email")}
             style={{ width: "25%" }}
           />
           <Column
@@ -263,7 +273,7 @@ const UsersTableOne = () => {
               userInfo?.role_id === 4 ? "collection_count" : "validation_count"
             }
             header={
-              userInfo?.role_id === 5 ? t("validations") : t("collections")
+              userInfo?.role_id === 5 ? t("validations") : t("collection")
             }
             style={{ width: "15%" }}
           />
@@ -309,20 +319,19 @@ const UsersTableOne = () => {
             </p>
             <p className="text-gray-600 dark:text-gray-400">
               <span className="font-medium">
-                {userInfo?.role_id === 5 ? t("validations") : t("collections")}{" "}
-                :
+                {userInfo?.role_id === 5 ? t("validations") : t("collection")} :
               </span>{" "}
               {userInfo?.role_id === 4
                 ? selectedAgent.collection_count
                 : selectedAgent.validation_count}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              <span className="font-medium">Dernière activité :</span>{" "}
+              <span className="font-medium">{t("last_activity")} :</span>{" "}
               {new Date(selectedAgent.last_activity).toLocaleString()}
             </p>
             <div className="flex justify-end mt-4">
               <Button
-                label="Fermer"
+                label={t("close")}
                 icon="pi pi-times"
                 unstyled
                 className="bg-[#00277F] hover:bg-[#001f66] text-white font-semibold px-4 py-2 rounded-lg shadow-md transition"

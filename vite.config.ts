@@ -18,7 +18,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt", "icons/*.png"],
       workbox: {
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 Mo par exemple
+
       },
       manifest: {
         name: "My PWA App",
@@ -52,7 +53,8 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      // Proxy pour les appels vers ton API distante
+      // Proxy pour les appels vers ton
+      // API distante
       "/api": {
         target: "https://gateway-api.dev.freetrade-ofr.com",
         changeOrigin: true,

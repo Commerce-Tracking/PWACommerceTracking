@@ -6,6 +6,7 @@ import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { CalenderIcon } from "../../icons";
 import axiosInstance from "../../api/axios";
 import useAuth from "../../providers/auth/useAuth";
+import { useTranslation } from "react-i18next";
 
 interface CollectionStats {
   submitted_by_collector: number;
@@ -22,6 +23,7 @@ interface CollectionStats {
 export default function MonthlyTarget() {
   const auth = useAuth();
   const userInfo = auth?.userInfo;
+  const { t } = useTranslation();
   const [stats, setStats] = useState<CollectionStats>({
     submitted_by_collector: 0,
     validated_by_team_manager: 0,
@@ -40,7 +42,7 @@ export default function MonthlyTarget() {
       try {
         const token = localStorage.getItem("accessToken");
         const res = await axiosInstance.get(
-          "/api/trade-flow/collections/counts/by-level",
+          "/trade-flow/collections/counts/by-level",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -53,7 +55,7 @@ export default function MonthlyTarget() {
         }
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching collection stats:", error);
+        console.error(t("error_fetching_collection_stats"), error);
         setIsLoading(false);
       }
     };
@@ -189,7 +191,7 @@ export default function MonthlyTarget() {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>{t("loading")}</div>;
   }
 
   return (
@@ -198,7 +200,7 @@ export default function MonthlyTarget() {
         <div className="flex justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Bilan des collectes
+              {t("collection_summary")}
             </h3>
           </div>
           <div className="relative inline-block">
@@ -242,14 +244,15 @@ export default function MonthlyTarget() {
           </span>
         </div>
         <p className="mx-auto mt-10 w-full max-w-[380px] text-center text-sm text-gray-500 sm:text-base">
-          Vous avez traité {metrics.processedCollections} collectes, continuez
-          votre bon travail!
+          {t("processed_collections_message", {
+            count: metrics.processedCollections,
+          })}
         </p>
       </div>
       <div className="flex items-center justify-center gap-5 px-6 py-3.5 sm:gap-8 sm:py-5">
         <div>
           <p className="mb-1 text-center text-gray-800 text-theme-xs dark:text-gray-400 sm:text-sm">
-            Collectes totales
+            {t("total_collections")}
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
             {metrics.totalCollections}
@@ -258,7 +261,7 @@ export default function MonthlyTarget() {
         <div className="w-px bg-gray-200 h-7 dark:bg-gray-800"></div>
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">
-            Collectes traitées
+            {t("processed_collections")}
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
             {metrics.processedCollections}
@@ -281,7 +284,7 @@ export default function MonthlyTarget() {
         <div className="w-px bg-gray-200 h-7 dark:bg-gray-800"></div>
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">
-            Collectes rejetées
+            {t("rejected_collections")}
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
             {metrics.rejectedCollections}

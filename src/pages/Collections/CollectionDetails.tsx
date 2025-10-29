@@ -36,6 +36,8 @@ interface Collection {
   transport_mode_id: number;
   vehicle_registration_number: string;
   transport_cost: string | null;
+  loading_cost: string | null;
+  unloading_cost: string | null;
   market_day: number | null;
   nearby_markets: string | null;
   currency_id: number;
@@ -153,7 +155,11 @@ interface Collection {
     product_processing_level: string | null;
     product_packaging: string | null;
     animal_count: number | null;
-    animal_categories: string | null;
+    animal_categories: Array<{
+      qty: number;
+      price: number;
+      category: string;
+    }> | null;
     animal_age_category: string | null;
     animal_gender: string | null;
     animal_condition: string | null;
@@ -591,8 +597,7 @@ const CollectionDetails = () => {
   const [showRejectDialog, setShowRejectDialog] = useState<boolean>(false);
   const [rejectReason, setRejectReason] = useState<string>("");
   const [isRejecting, setIsRejecting] = useState<boolean>(false);
-  const [isValidatingSupervisor, setIsValidatingSupervisor] =
-    useState<boolean>(false);
+  const [isResubmission, setIsResubmission] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCollection = async () => {
@@ -602,7 +607,7 @@ const CollectionDetails = () => {
         // Récupérer les données de la collecte
         console.log(`Fetching collection data for ID: ${id}`);
         const collectionResponse = await axiosInstance.get(
-          `/api/trade-flow/digitalized-collections/${id}`
+          `/trade-flow/digitalized-collections/${id}`
         );
         console.log(
           "Données de la collecte:",
@@ -616,7 +621,7 @@ const CollectionDetails = () => {
           try {
             console.log(`Fetching workflow data for ID: ${id}`);
             const workflowResponse = await axiosInstance.get<WorkflowResponse>(
-              `/api/trade-flow/collections/${id}/workflow`
+              `/trade-flow/collections/${id}/workflow`
             );
             console.log(
               "Données du workflow:",
@@ -717,7 +722,16 @@ const CollectionDetails = () => {
             }
           }
 
+          console.log("=== DEBUG FINAL COLLECTION DATA ===");
+          console.log("collectionData:", collectionData);
+          console.log(
+            "collectionValidations:",
+            collectionData.collectionValidations
+          );
+          console.log("=== FIN DEBUG FINAL COLLECTION DATA ===");
+
           setCollection(collectionData);
+          setIsResubmission(false); // Réinitialiser le flag de resoumission
           setIsLoading(false);
         } else {
           console.error(
@@ -781,8 +795,8 @@ const CollectionDetails = () => {
       // Choisir l'endpoint selon le rôle
       const endpoint =
         userInfo?.role_id === 4
-          ? `/api/trade-flow/collections/${collection.id}/validate/team-manager/complete`
-          : `/api/trade-flow/collections/${collection.id}/validate/supervisor/complete`;
+          ? `/trade-flow/collections/${collection.id}/validate/team-manager/complete`
+          : `/trade-flow/collections/${collection.id}/validate/supervisor/complete`;
 
       const response = await axiosInstance.post<ValidationResponse>(
         endpoint,
@@ -794,9 +808,22 @@ const CollectionDetails = () => {
       );
 
       if (response.data.success) {
+        // Vérifier si c'est une resoumission
+        const isResubmissionFlag =
+          (response.data.result as any)?.is_resubmission === true;
+        console.log("=== DETECTION RESOUMISSION ===");
+        console.log("is_resubmission flag:", isResubmissionFlag);
+        console.log("response.data.result:", response.data.result);
+        console.log("=== FIN DETECTION RESOUMISSION ===");
+
+        if (isResubmissionFlag) {
+          setIsResubmission(true);
+          console.log("Flag isResubmission défini à true");
+        }
+
         toast.current?.show({
           severity: "success",
-          summary: "Validation réussie",
+          summary: t("validation_successful"),
           detail: response.data.message,
           life: 5000,
         });
@@ -804,7 +831,7 @@ const CollectionDetails = () => {
         // Recharger les données de la collecte
         console.log(`Reloading collection data for ID: ${collection.id}`);
         const collectionResponse = await axiosInstance.get(
-          `/api/trade-flow/digitalized-collections/${collection.id}`
+          `/trade-flow/digitalized-collections/${collection.id}`
         );
         console.log(
           "Données de la collecte après validation:",
@@ -818,7 +845,7 @@ const CollectionDetails = () => {
           try {
             console.log(`Reloading workflow data for ID: ${collection.id}`);
             const workflowResponse = await axiosInstance.get<WorkflowResponse>(
-              `/api/trade-flow/collections/${collection.id}/workflow`
+              `/trade-flow/collections/${collection.id}/workflow`
             );
             console.log(
               "Données du workflow après validation:",
@@ -880,7 +907,7 @@ const CollectionDetails = () => {
         console.error("Échec de la validation:", response.data);
         toast.current?.show({
           severity: "error",
-          summary: "Erreur de validation",
+          summary: t("validation_error"),
           detail: response.data.message || "Erreur lors de la validation",
           life: 5000,
         });
@@ -927,21 +954,34 @@ const CollectionDetails = () => {
       );
       console.log(
         "URL de rejet:",
-        `/api/trade-flow/collections/${collection.id}/reject`
+        `/trade-flow/collections/${collection.id}/reject`
       );
       console.log("Raison du rejet:", rejectReason.trim());
 
       const response = await axiosInstance.post(
-        `/api/trade-flow/collections/${collection.id}/reject`,
+        `/trade-flow/collections/${collection.id}/reject`,
         requestData
       );
 
       console.log("Réponse de rejet:", JSON.stringify(response.data, null, 2));
 
       if (response.data.success) {
+        // Vérifier si c'est une resoumission
+        const isResubmissionFlag =
+          (response.data.result as any)?.is_resubmission === true;
+        console.log("=== DETECTION RESOUMISSION (REJECT) ===");
+        console.log("is_resubmission flag:", isResubmissionFlag);
+        console.log("response.data.result:", response.data.result);
+        console.log("=== FIN DETECTION RESOUMISSION (REJECT) ===");
+
+        if (isResubmissionFlag) {
+          setIsResubmission(true);
+          console.log("Flag isResubmission défini à true (reject)");
+        }
+
         toast.current?.show({
           severity: "success",
-          summary: "Collecte rejetée",
+          summary: t("collection_rejected"),
           detail: response.data.message,
           life: 5000,
         });
@@ -949,7 +989,7 @@ const CollectionDetails = () => {
         // Recharger les données de la collecte
         console.log(`Reloading collection data for ID: ${collection.id}`);
         const collectionResponse = await axiosInstance.get(
-          `/api/trade-flow/digitalized-collections/${collection.id}`
+          `/trade-flow/digitalized-collections/${collection.id}`
         );
 
         if (collectionResponse.data.success) {
@@ -958,7 +998,7 @@ const CollectionDetails = () => {
           // Recharger l'état du workflow
           try {
             const workflowResponse = await axiosInstance.get<WorkflowResponse>(
-              `/api/trade-flow/collections/${collection.id}/workflow`
+              `/trade-flow/collections/${collection.id}/workflow`
             );
 
             if (workflowResponse.data.success) {
@@ -1015,7 +1055,7 @@ const CollectionDetails = () => {
         console.error("Échec du rejet:", response.data);
         toast.current?.show({
           severity: "error",
-          summary: "Erreur de rejet",
+          summary: t("rejection_error"),
           detail: response.data.message || "Erreur lors du rejet",
           life: 5000,
         });
@@ -1050,7 +1090,7 @@ const CollectionDetails = () => {
     if (!collection || !userInfo) return;
 
     try {
-      setIsValidatingSupervisor(true);
+      setIsValidating(true);
 
       const requestData = {
         validation_notes:
@@ -1069,7 +1109,7 @@ const CollectionDetails = () => {
       );
 
       const response = await axiosInstance.post(
-        `/api/trade-flow/collections/${collection.id}/validate/supervisor/complete`,
+        `/trade-flow/collections/${collection.id}/validate/supervisor/complete`,
         requestData
       );
 
@@ -1081,7 +1121,7 @@ const CollectionDetails = () => {
       if (response.data.success) {
         toast.current?.show({
           severity: "success",
-          summary: "Collecte validée",
+          summary: t("collection_validated"),
           detail: response.data.message,
           life: 5000,
         });
@@ -1089,7 +1129,7 @@ const CollectionDetails = () => {
         // Recharger les données de la collecte
         console.log(`Reloading collection data for ID: ${collection.id}`);
         const collectionResponse = await axiosInstance.get(
-          `/api/trade-flow/digitalized-collections/${collection.id}`
+          `/trade-flow/digitalized-collections/${collection.id}`
         );
 
         if (collectionResponse.data.success) {
@@ -1098,7 +1138,7 @@ const CollectionDetails = () => {
           // Recharger l'état du workflow
           try {
             const workflowResponse = await axiosInstance.get<WorkflowResponse>(
-              `/api/trade-flow/collections/${collection.id}/workflow`
+              `/trade-flow/collections/${collection.id}/workflow`
             );
 
             if (workflowResponse.data.success) {
@@ -1158,20 +1198,38 @@ const CollectionDetails = () => {
         life: 5000,
       });
     } finally {
-      setIsValidatingSupervisor(false);
+      setIsValidating(false);
     }
   };
 
   const canValidate = () => {
+    // Pour le chef d'équipe, vérifier si la collection peut être validée
+    // Prendre en compte la resoumission : si status = "submitted" et qu'il n'y a pas de validation courante approuvée
+    const hasCurrentApprovedValidation =
+      collection?.collectionValidations?.some(
+        (validation: any) =>
+          validation.validation_level === "1" &&
+          validation.validation_result === "approved" &&
+          validation.is_current_validation === 1
+      );
+
     const result =
       userInfo?.role_id === 4 &&
-      !collection?.validated_by_team_manager &&
-      collection?.validation_result !== "approved" &&
-      collection?.validation_result !== "rejected";
-    console.log("=== DEBUG canValidate ===");
-    console.log("userInfo:", userInfo);
-    console.log("userInfo?.role_id:", userInfo?.role_id);
-    console.log("collection:", collection);
+      collection?.status === "submitted" &&
+      (!hasCurrentApprovedValidation || isResubmission);
+
+    console.log("=== DEBUG canValidate (RESOUMISSION) ===");
+    console.log("userInfo?.role_id === 4:", userInfo?.role_id === 4);
+    console.log(
+      "collection?.status === 'submitted':",
+      collection?.status === "submitted"
+    );
+    console.log("hasCurrentApprovedValidation:", hasCurrentApprovedValidation);
+    console.log("isResubmission:", isResubmission);
+    console.log(
+      "collection?.collectionValidations:",
+      collection?.collectionValidations
+    );
     console.log(
       "collection?.validated_by_team_manager:",
       collection?.validated_by_team_manager
@@ -1180,54 +1238,114 @@ const CollectionDetails = () => {
       "collection?.validation_result:",
       collection?.validation_result
     );
-    console.log("collection?.validated_at:", collection?.validated_at);
-    console.log("collection?.status:", collection?.status);
-    console.log("Conditions individuelles:");
-    console.log("- userInfo?.role_id === 4:", userInfo?.role_id === 4);
-    console.log(
-      "- !collection?.validated_by_team_manager:",
-      !collection?.validated_by_team_manager
-    );
-    console.log(
-      "- collection?.validation_result !== 'approved':",
-      collection?.validation_result !== "approved"
-    );
-    console.log(
-      "- collection?.validation_result !== 'rejected':",
-      collection?.validation_result !== "rejected"
-    );
     console.log("canValidate result:", result);
     console.log("========================");
     return result;
   };
 
   const canSupervisorValidate = () => {
-    // Pour le superviseur, vérifier si la collecte est validée par le chef d'équipe
-    // et n'est pas encore validée ou rejetée par le superviseur
+    // Pour le superviseur, vérifier si la collecte peut être validée
+    // Prendre en compte la resoumission : si elle est validée par le chef d'équipe mais pas encore par le superviseur
+
+    // Vérification de sécurité
+    if (
+      !collection?.collectionValidations ||
+      collection.collectionValidations.length === 0
+    ) {
+      console.log(
+        "=== DEBUG canSupervisorValidate: Pas de collectionValidations ==="
+      );
+      console.log(
+        "collection?.collectionValidations:",
+        collection?.collectionValidations
+      );
+
+      // Fallback: utiliser les anciennes propriétés si collectionValidations n'est pas disponible
+      const hasTeamManagerApproval = collection?.validated_by_team_manager;
+      const hasCurrentSupervisorValidation =
+        collection?.validated_by_supervisor;
+
+      const result =
+        userInfo?.role_id === 5 &&
+        hasTeamManagerApproval &&
+        !hasCurrentSupervisorValidation;
+
+      console.log("=== FALLBACK LOGIC ===");
+      console.log("hasTeamManagerApproval (fallback):", hasTeamManagerApproval);
+      console.log(
+        "hasCurrentSupervisorValidation (fallback):",
+        hasCurrentSupervisorValidation
+      );
+      console.log("Résultat final (fallback):", result);
+      console.log("=== FIN FALLBACK LOGIC ===");
+
+      return result;
+    }
+
+    // Vérifier si le chef d'équipe a approuvé (validation courante ou historique)
+    const hasTeamManagerApproval = collection?.collectionValidations?.some(
+      (validation: any) =>
+        validation.validation_level === "1" &&
+        validation.validation_result === "approved"
+    );
+
+    // Vérifier s'il y a une validation superviseur courante ET résolue (approved ou rejected)
+    const hasCurrentSupervisorValidation =
+      collection?.collectionValidations?.some(
+        (validation: any) =>
+          validation.validation_level === "2" &&
+          validation.is_current_validation === 1 &&
+          (validation.validation_result === "approved" ||
+            validation.validation_result === "rejected")
+      );
+
+    // Le superviseur peut valider si :
+    // 1. Il est superviseur (role_id === 5)
+    // 2. Le chef d'équipe a approuvé (à un moment donné)
+    // 3. Il n'y a pas de validation superviseur courante en cours OU c'est une resoumission
     const result =
       userInfo?.role_id === 5 &&
-      collection?.validated_by_team_manager &&
-      collection?.validation_result === "approved" &&
-      !collection?.validated_by_supervisor &&
-      collection?.supervisor_validation_result !== "rejected";
+      hasTeamManagerApproval &&
+      (!hasCurrentSupervisorValidation || isResubmission);
 
-    console.log("=== DEBUG canSupervisorValidate ===");
+    console.log("=== DEBUG canSupervisorValidate (RESOUMISSION) ===");
     console.log("userInfo?.role_id === 5:", userInfo?.role_id === 5);
+    console.log("hasTeamManagerApproval:", hasTeamManagerApproval);
+    console.log(
+      "hasCurrentSupervisorValidation:",
+      hasCurrentSupervisorValidation
+    );
+    console.log("isResubmission:", isResubmission);
+    console.log(
+      "collection?.collectionValidations:",
+      collection?.collectionValidations
+    );
+
+    // Debug détaillé des validations
+    if (collection?.collectionValidations) {
+      collection.collectionValidations.forEach(
+        (validation: any, index: number) => {
+          console.log(`Validation ${index}:`, {
+            validation_level: validation.validation_level,
+            validation_result: validation.validation_result,
+            is_current_validation: validation.is_current_validation,
+            validated_at: validation.validated_at,
+          });
+        }
+      );
+    }
+
     console.log(
       "collection?.validated_by_team_manager:",
       collection?.validated_by_team_manager
     );
     console.log(
-      "collection?.validation_result === 'approved':",
-      collection?.validation_result === "approved"
+      "collection?.validated_by_supervisor:",
+      collection?.validated_by_supervisor
     );
     console.log(
-      "!collection?.validated_by_supervisor:",
-      !collection?.validated_by_supervisor
-    );
-    console.log(
-      "collection?.supervisor_validation_result !== 'rejected':",
-      collection?.supervisor_validation_result !== "rejected"
+      "collection?.supervisor_validation_result:",
+      collection?.supervisor_validation_result
     );
     console.log("Résultat final:", result);
     console.log("=== FIN DEBUG canSupervisorValidate ===");
@@ -1239,7 +1357,7 @@ const CollectionDetails = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-800">Chargement des détails...</p>
+          <p className="mt-4 text-gray-800">{t("loading_details")}</p>
         </div>
       </div>
     );
@@ -1249,9 +1367,11 @@ const CollectionDetails = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error || "Collecte non trouvée"}</p>
+          <p className="text-red-600 mb-4">
+            {error || t("collection_not_found")}
+          </p>
           <Button
-            label="Retour à la liste"
+            label={t("back_to_list")}
             icon="pi pi-arrow-left"
             style={{ backgroundColor: "#00277F", borderColor: "#00277F" }}
             onClick={() => navigate("/create-user")}
@@ -1278,7 +1398,7 @@ const CollectionDetails = () => {
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button
-              label="Retour à la liste"
+              label={t("back_to_list")}
               icon="pi pi-arrow-left"
               style={{ backgroundColor: "#00277F", borderColor: "#00277F" }}
               className="w-full sm:w-auto text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
@@ -1287,14 +1407,14 @@ const CollectionDetails = () => {
             {(canValidate() || canSupervisorValidate()) && (
               <>
                 <Button
-                  label="Valider la collecte"
+                  label={t("validate_collection")}
                   icon="pi pi-check"
                   className="!bg-green-600 !hover:bg-green-700 w-full sm:w-auto text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
                   onClick={() => setShowValidationDialog(true)}
                 />
                 {(userInfo?.role_id === 4 || canSupervisorValidate()) && (
                   <Button
-                    label="Rejeter la collecte"
+                    label={t("reject_collection")}
                     icon="pi pi-times"
                     className="!bg-red-600 !hover:bg-red-700 w-full sm:w-auto text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
                     onClick={() => setShowRejectDialog(true)}
@@ -1303,33 +1423,54 @@ const CollectionDetails = () => {
               </>
             )}
             {userInfo?.role_id === 4 &&
-              collection.validated_by_team_manager && (
+              collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "1" &&
+                  validation.validation_result === "approved" &&
+                  validation.is_current_validation === 1
+              ) && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-green-100 text-green-800 rounded-lg w-full sm:w-auto">
                   <i className="pi pi-check-circle text-green-600"></i>
                   <span className="text-sm font-bold">
-                    Collecte déjà validée
+                    {t("collection_already_validated")}
                   </span>
                 </div>
               )}
             {userInfo?.role_id === 4 &&
-              collection?.validation_result === "rejected" && (
+              collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "1" &&
+                  validation.validation_result === "rejected" &&
+                  validation.is_current_validation === 1
+              ) && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-800 rounded-lg w-full sm:w-auto">
                   <i className="pi pi-times-circle text-red-600"></i>
-                  <span className="text-sm font-bold">Collecte rejetée</span>
+                  <span className="text-sm font-bold">
+                    {t("collection_rejected")}
+                  </span>
                 </div>
               )}
             {userInfo?.role_id === 5 &&
-              collection.validated_by_team_manager &&
-              !collection.validated_by_supervisor && (
+              collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "1" &&
+                  validation.validation_result === "approved" &&
+                  validation.is_current_validation === 1
+              ) &&
+              !collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "2" &&
+                  validation.is_current_validation === 1
+              ) && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg w-full sm:w-auto">
                   <i className="pi pi-clock text-yellow-600"></i>
                   <div className="flex flex-col">
                     <span className="text-sm font-bold">
-                      En attente de validation superviseur
+                      {t("waiting_supervisor_validation")}
                     </span>
                     {collection.validated_at && (
                       <span className="text-xs text-yellow-600">
-                        Validée par le chef d'équipe le{" "}
+                        {t("validated_by_team_manager_on")}{" "}
                         {new Date(collection.validated_at).toLocaleDateString()}
                       </span>
                     )}
@@ -1337,16 +1478,21 @@ const CollectionDetails = () => {
                 </div>
               )}
             {userInfo?.role_id === 5 &&
-              collection.supervisor_validation_result === "rejected" && (
+              collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "2" &&
+                  validation.validation_result === "rejected" &&
+                  validation.is_current_validation === 1
+              ) && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-800 rounded-lg w-full sm:w-auto">
                   <i className="pi pi-times-circle text-red-600"></i>
                   <div className="flex flex-col">
                     <span className="text-sm font-bold">
-                      Collecte rejetée par le superviseur
+                      {t("rejected_by_supervisor")}
                     </span>
                     {collection.supervisor_validated_at && (
                       <span className="text-xs text-red-600">
-                        Rejetée le{" "}
+                        {t("rejected_on")}{" "}
                         {new Date(
                           collection.supervisor_validated_at
                         ).toLocaleDateString()}
@@ -1355,43 +1501,50 @@ const CollectionDetails = () => {
                   </div>
                 </div>
               )}
-            {userInfo?.role_id === 5 && collection.validated_by_supervisor && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg w-full sm:w-auto">
-                <i className="pi pi-check-circle text-blue-600"></i>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold">
-                    Collecte validée par le superviseur
-                  </span>
-                  {collection.supervisor_validated_at && (
-                    <span className="text-xs text-blue-600">
-                      Validée le{" "}
-                      {new Date(
-                        collection.supervisor_validated_at
-                      ).toLocaleDateString()}
+            {userInfo?.role_id === 5 &&
+              collection?.collectionValidations?.some(
+                (validation: any) =>
+                  validation.validation_level === "2" &&
+                  validation.validation_result === "approved" &&
+                  validation.is_current_validation === 1
+              ) && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-lg w-full sm:w-auto">
+                  <i className="pi pi-check-circle text-blue-600"></i>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold">
+                      {t("validated_by_supervisor")}
                     </span>
-                  )}
+                    {collection.supervisor_validated_at && (
+                      <span className="text-xs text-blue-600">
+                        {t("validated_on")}{" "}
+                        {new Date(
+                          collection.supervisor_validated_at
+                        ).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </div>
 
-        <ComponentCard title="Détails généraux de la collecte">
+        <ComponentCard title={t("collection_general_details")}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 text-lg">
-                Information général de la collecte
+                {t("collection_general_info")}
               </h3>
               <div className="space-y-2">
                 {/* <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">ID :</span> {collection.id}
+                  <span className="font-bold">{t("collection_id")} :</span>{" "}
+                  {collection.id}
                 </p> */}
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Public ID :</span>{" "}
                   {collection.public_id}
                 </p> */}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Type :</span>{" "}
+                  <span className="font-bold">{t("collection_type")} :</span>{" "}
                   {getCollectionTypeLabel(collection.collection_type)}
                 </p>
                 {/* <p className="text-gray-600 dark:text-gray-400">
@@ -1399,37 +1552,47 @@ const CollectionDetails = () => {
                   {collection.collection_context}
                 </p> */}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Genre de l'opérateur :</span>{" "}
+                  <span className="font-bold">{t("operator_gender")} :</span>{" "}
                   {collection.operator_gender}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Type d'opérateur :</span>{" "}
+                  <span className="font-bold">{t("operator_type")} :</span>{" "}
                   {collection.operator_type}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Nature du répondant :</span>{" "}
+                  <span className="font-bold">{t("respondent_nature")} :</span>{" "}
                   {collection.respondent_nature}
                 </p>
                 {collection.other_respondent_nature && (
                   <p className="text-gray-800 dark:text-gray-400">
-                    <span className="font-bold">Autre nature :</span>{" "}
+                    <span className="font-bold">
+                      {t("other_respondent_nature")} :
+                    </span>{" "}
                     {collection.other_respondent_nature}
                   </p>
                 )}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Genre du propriétaire :</span>{" "}
+                  <span className="font-bold">
+                    {t("merchandise_owner_gender")} :
+                  </span>{" "}
                   {collection.merchandise_owner_gender}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Catégorie d'âge :</span>{" "}
+                  <span className="font-bold">
+                    {t("merchandise_owner_age_category")} :
+                  </span>{" "}
                   {collection.merchandise_owner_age_category}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Handicap :</span>{" "}
-                  {collection.merchandise_owner_has_disability ? "Oui" : "Non"}
+                  <span className="font-bold">
+                    {t("merchandise_owner_has_disability")} :
+                  </span>{" "}
+                  {collection.merchandise_owner_has_disability
+                    ? t("yes")
+                    : t("no")}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Statut :</span>
+                  <span className="font-bold">{t("collection_status")} :</span>
                   <span
                     className={`ml-2 px-2 py-1 rounded text-xs ${
                       collection.status === "validated"
@@ -1443,17 +1606,17 @@ const CollectionDetails = () => {
                   </span>
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Date de collecte :</span>{" "}
+                  <span className="font-bold">{t("collection_date")} :</span>{" "}
                   {collection.collection_date
                     ? new Date(collection.collection_date).toLocaleDateString()
-                    : "Non définie"}
+                    : t("not_specified")}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Créé le :</span>{" "}
+                  <span className="font-bold">{t("created_at")} :</span>{" "}
                   {new Date(collection.created_at).toLocaleString()}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Mise à jour le :</span>{" "}
+                  <span className="font-bold">{t("updated_at")} :</span>{" "}
                   {new Date(collection.updated_at).toLocaleString()}
                 </p>
                 {/* <p className="text-gray-600 dark:text-gray-400">
@@ -1465,29 +1628,29 @@ const CollectionDetails = () => {
                   {collection.market_price_variation} %
                 </p> */}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Notes :</span>{" "}
-                  {collection.notes || "Aucune"}
+                  <span className="font-bold">{t("notes")} :</span>{" "}
+                  {collection.notes || t("none")}
                 </p>
               </div>
             </div>
 
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 text-lg">
-                Collecteur
+                {t("collector")}
               </h3>
               <div className="space-y-2">
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Nom :</span>{" "}
-                  {collection.collector?.first_name || "Non spécifié"}{" "}
+                  <span className="font-bold">{t("collector_name")} :</span>{" "}
+                  {collection.collector?.first_name || t("not_specified")}{" "}
                   {collection.collector?.last_name || ""}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Téléphone :</span>{" "}
-                  {collection.collector?.phone || "Non spécifié"}
+                  <span className="font-bold">{t("collector_phone")} :</span>{" "}
+                  {collection.collector?.phone || t("not_specified")}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Email :</span>{" "}
-                  {collection.collector?.email || "Non spécifié"}
+                  <span className="font-bold">{t("collector_email")} :</span>{" "}
+                  {collection.collector?.email || t("not_specified")}
                 </p>
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Genre :</span>{" "}
@@ -1507,7 +1670,7 @@ const CollectionDetails = () => {
                     ? new Date(
                         collection.collector.date_of_birth
                       ).toLocaleDateString()
-                    : "Non spécifié"}
+                    : t("not_specified")}
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Lieu de naissance :</span>{" "}
@@ -1518,12 +1681,12 @@ const CollectionDetails = () => {
 
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 text-lg">
-                Point de Collecte et Corridor
+                {t("collection_point_and_corridor")}
               </h3>
               <div className="space-y-2">
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Point de collecte :</span>{" "}
-                  {collection.collectionPoint?.name || "Non spécifié"}
+                  <span className="font-bold">{t("collection_point")} :</span>{" "}
+                  {collection.collectionPoint?.name || t("not_specified")}
                 </p>
                 {/* {collection.collectionPoint?.description && (
                   <p className="text-gray-600 dark:text-gray-400">
@@ -1532,8 +1695,8 @@ const CollectionDetails = () => {
                   </p>
                 )} */}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Localité :</span>{" "}
-                  {collection.collectionPoint?.locality || "Non spécifiée"}
+                  <span className="font-bold">{t("locality")} :</span>{" "}
+                  {collection.collectionPoint?.locality || t("not_specified")}
                 </p>
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Région :</span>{" "}
@@ -1564,12 +1727,14 @@ const CollectionDetails = () => {
                   {collection.collectionPoint?.is_checkpoint ? "Oui" : "Non"}
                 </p> */}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Corridor :</span>{" "}
-                  {collection.corridor?.name || "Non spécifié"}
+                  <span className="font-bold">{t("corridor")} :</span>{" "}
+                  {collection.corridor?.name || t("not_specified")}
                 </p>
                 {collection.corridor?.description && (
                   <p className="text-gray-800 dark:text-gray-400">
-                    <span className="font-bold">Description du corridor :</span>{" "}
+                    <span className="font-bold">
+                      {t("corridor_description")} :
+                    </span>{" "}
                     {collection.corridor.description}
                   </p>
                 )}
@@ -1577,24 +1742,24 @@ const CollectionDetails = () => {
                   <span className="font-bold">Distance :</span>{" "}
                   {collection.corridor?.distance
                     ? `${collection.corridor.distance} km`
-                    : "Non spécifiée"}
+                    : t("not_specified")}
                 </p> */}
-                <p className="text-gray-800 dark:text-gray-400">
+                {/* <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">
-                    Nombre de postes de contrôle :
+                    {t("control_posts_count")} :
                   </span>{" "}
                   {collection.corridor?.nbre_checkpoints || 0}
-                </p>
+                </p> */}
               </div>
             </div>
 
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 text-lg">
-                Transport et Taxes
+                {t("transport_and_taxes")}
               </h3>
               <div className="space-y-2">
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Pays de chargement :</span>{" "}
+                  <span className="font-bold">{t("loading_country")} :</span>{" "}
                   {collection.originCity?.name} (
                   {collection.originCountry?.flag}{" "}
                   {collection.originCountry?.name})
@@ -1604,7 +1769,7 @@ const CollectionDetails = () => {
                   {collection.intermediate_destination || "Aucune"}
                 </p> */}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Pays de déchargement :</span>{" "}
+                  <span className="font-bold">{t("unloading_country")} :</span>{" "}
                   {collection.finalDestinationCity?.name} (
                   {collection.destinationCountry?.flag}{" "}
                   {collection.destinationCountry?.name})
@@ -1615,35 +1780,57 @@ const CollectionDetails = () => {
                   {collection.originCountry?.name}
                 </p> */}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Pays de destination :</span>{" "}
+                  <span className="font-bold">
+                    {t("destination_country")} :
+                  </span>{" "}
                   {collection.destinationCountry?.flag}{" "}
                   {collection.destinationCountry?.name}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Direction du flux:</span>{" "}
+                  <span className="font-bold">
+                    {t("trade_flow_direction")}:
+                  </span>{" "}
                   {collection.trade_flow_direction}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Moyen de transport :</span>{" "}
+                  <span className="font-bold">{t("transport_mode")} :</span>{" "}
                   {collection.transportMode?.name} -{" "}
                   {collection.transportMode?.description}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Plaque :</span>{" "}
+                  <span className="font-bold">
+                    {t("vehicle_registration_number")} :
+                  </span>{" "}
                   {collection.vehicle_registration_number}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Coût du transport :</span>{" "}
+                  <span className="font-bold">{t("transport_cost")} :</span>{" "}
                   {collection.transport_cost
                     ? `${collection.transport_cost} ${collection.currency?.symbol}`
-                    : "Non spécifié"}
+                    : t("not_specified")}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Paiement :</span>{" "}
+                  <span className="font-bold">{t("loading_cost")} :</span>{" "}
+                  {(collection as any).loading_cost
+                    ? `${(collection as any).loading_cost} ${
+                        collection.currency?.symbol
+                      }`
+                    : t("not_specified")}
+                </p>
+                <p className="text-gray-800 dark:text-gray-400">
+                  <span className="font-bold">{t("unloading_cost")} :</span>{" "}
+                  {(collection as any).unloading_cost
+                    ? `${(collection as any).unloading_cost} ${
+                        collection.currency?.symbol
+                      }`
+                    : t("not_specified")}
+                </p>
+                <p className="text-gray-800 dark:text-gray-400">
+                  <span className="font-bold">{t("payment_method")} :</span>{" "}
                   {collection.payment_method}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Devise :</span>{" "}
+                  <span className="font-bold">{t("currency")} :</span>{" "}
                   {collection.currency?.name || `ID: ${collection.currency_id}`}{" "}
                   ({collection.currency?.symbol || "N/A"})
                 </p>
@@ -1652,34 +1839,269 @@ const CollectionDetails = () => {
                   {collection.season?.name || "Non spécifié"}
                 </p> */}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Poids total :</span>{" "}
+                  <span className="font-bold">{t("total_weight")} :</span>{" "}
                   {collection.total_weight_kg} kg
                 </p>
+
+                {/* === CHAMPS NON AFFICHÉS ACTUELLEMENT === */}
+
+                {/* Informations sur l'opérateur */}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Taxes et frais :</span>{" "}
-                  {collection.taxes_fees
-                    ? `${collection.taxes_fees} ${collection.currency?.symbol}`
-                    : "Non spécifié"}
+                  <span className="font-bold">Genre de l'opérateur :</span>{" "}
+                  {collection.operator_gender === "M" ? t("male") : t("female")}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Détails des taxes :</span>{" "}
-                  {collection.tax_details || "Aucun"}
+                  <span className="font-bold">Type d'opérateur :</span>{" "}
+                  {collection.operator_type === "formal"
+                    ? t("formal")
+                    : t("informal")}
+                </p>
+
+                {/* Informations sur le répondant */}
+                <p className="text-gray-800 dark:text-gray-400">
+                  <span className="font-bold">{t("respondent_nature")} :</span>{" "}
+                  {collection.respondent_nature}
+                </p>
+                {collection.other_respondent_nature && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("other_respondent_nature")} :
+                    </span>{" "}
+                    {collection.other_respondent_nature}
+                  </p>
+                )}
+
+                {/* Informations sur le propriétaire de la marchandise */}
+                <p className="text-gray-800 dark:text-gray-400">
+                  <span className="font-bold">
+                    {t("merchandise_owner_gender")} :
+                  </span>{" "}
+                  {collection.merchandise_owner_gender}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Taxes payées :</span>{" "}
-                  {collection.taxes_paid ? "Oui" : "Non"} (
-                  {collection.tax_amount} {collection.currency?.symbol})
+                  <span className="font-bold">
+                    Catégorie d'âge du propriétaire :
+                  </span>{" "}
+                  {collection.merchandise_owner_age_category}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Frais illégaux payés :</span>{" "}
-                  {collection.illegal_fees_paid ? "Oui" : "Non"} (
-                  {collection.illegal_fees_amount || "Aucun"}{" "}
-                  {collection.currency?.symbol})
+                  <span className="font-bold">Handicap du propriétaire :</span>{" "}
+                  {collection.merchandise_owner_has_disability
+                    ? t("yes")
+                    : t("no")}
+                </p>
+
+                {/* Contexte de collecte */}
+                <p className="text-gray-800 dark:text-gray-400">
+                  <span className="font-bold">{t("collection_context")} :</span>{" "}
+                  {collection.collection_context}
+                </p>
+
+                {/* Destination intermédiaire */}
+                {collection.intermediate_destination && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("intermediate_destination")} :
+                    </span>{" "}
+                    {collection.intermediate_destination}
+                  </p>
+                )}
+
+                {/* Informations sur le marché */}
+                {collection.market_day && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">{t("market_day")} :</span>{" "}
+                    {collection.market_day}
+                  </p>
+                )}
+                {collection.nearby_markets && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">{t("nearby_markets")} :</span>{" "}
+                    {collection.nearby_markets}
+                  </p>
+                )}
+
+                {/* Conditions du marché */}
+                {collection.market_condition && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">{t("market_condition")} :</span>{" "}
+                    {collection.market_condition}
+                  </p>
+                )}
+                {collection.market_price_variation && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("market_price_variation")} :
+                    </span>{" "}
+                    {collection.market_price_variation}
+                  </p>
+                )}
+
+                {/* Taxes et frais */}
+                {collection.taxes_fees && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">{t("taxes_fees")} :</span>{" "}
+                    {collection.taxes_fees}
+                  </p>
+                )}
+                {collection.tax_details && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">{t("tax_details")} :</span>{" "}
+                    {collection.tax_details}
+                  </p>
+                )}
+                {collection.taxes_paid && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">{t("taxes_paid")} :</span>{" "}
+                    {collection.taxes_paid}
+                  </p>
+                )}
+                {collection.tax_amount && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">{t("tax_amount")} :</span>{" "}
+                    {collection.tax_amount}
+                  </p>
+                )}
+
+                {/* Coordonnées GPS */}
+                {(collection.gps_latitude || collection.gps_longitude) && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">{t("gps_coordinates")} :</span>{" "}
+                    {collection.gps_latitude && collection.gps_longitude
+                      ? `${collection.gps_latitude}, ${collection.gps_longitude}`
+                      : t("not_specified")}
+                  </p>
+                )}
+
+                {/* Contrôles */}
+                <p className="text-gray-800 dark:text-gray-400">
+                  <span className="font-bold">{t("control_posts")} :</span>{" "}
+                  {collection.has_control_posts ? t("yes") : t("no")}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Lieux des frais illégaux :</span>{" "}
-                  {collection.illegal_fees_locations || "Aucun"}
+                  <span className="font-bold">
+                    {t("control_posts_count")} :
+                  </span>{" "}
+                  {collection.control_posts_count !== null &&
+                  collection.control_posts_count !== undefined
+                    ? collection.control_posts_count
+                    : t("not_specified")}
+                  {/* Debug: {JSON.stringify(collection.control_posts_count)} */}
                 </p>
+                {collection.control_locations && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("control_locations")} :
+                    </span>{" "}
+                    {collection.control_locations}
+                  </p>
+                )}
+                {collection.control_duration_type && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("control_duration_type")} :
+                    </span>{" "}
+                    {collection.control_duration_type}
+                  </p>
+                )}
+                {collection.control_duration_value && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("control_duration_value")} :
+                    </span>{" "}
+                    {collection.control_duration_value}
+                  </p>
+                )}
+
+                {/* Frais illégaux */}
+                {collection.illegal_fees_paid && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("illegal_fees_paid")} :
+                    </span>{" "}
+                    {collection.illegal_fees_paid}
+                  </p>
+                )}
+                {collection.illegal_fees_locations && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("illegal_fees_locations")} :
+                    </span>{" "}
+                    {collection.illegal_fees_locations}
+                  </p>
+                )}
+                {collection.illegal_fees_amount && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("illegal_fees_amount")} :
+                    </span>{" "}
+                    {collection.illegal_fees_amount}
+                  </p>
+                )}
+
+                {/* Connaissance des réglementations */}
+                {collection.knows_community_regulations !== null && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("knows_community_regulations")} :
+                    </span>{" "}
+                    {collection.knows_community_regulations
+                      ? t("yes")
+                      : t("no")}
+                  </p>
+                )}
+                {collection.knows_national_regulations !== null && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("knows_national_regulations")} :
+                    </span>{" "}
+                    {collection.knows_national_regulations ? t("yes") : t("no")}
+                  </p>
+                )}
+
+                {/* Autres difficultés */}
+                {collection.other_difficulties && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">
+                      {t("other_difficulties")} :
+                    </span>{" "}
+                    {collection.other_difficulties}
+                  </p>
+                )}
+
+                {/* Notes */}
+                {collection.notes && (
+                  <p className="text-gray-800 dark:text-gray-400">
+                    <span className="font-bold">{t("notes")} :</span>{" "}
+                    {collection.notes}
+                  </p>
+                )}
+
+                {/* Informations système */}
+                {/* <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-bold">{t("collection_status")} :</span>{" "}
+                  {collection.status}
+                </p> */}
+                {/* <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-bold">{t("created_at")} :</span>{" "}
+                  {new Date(collection.created_at).toLocaleString()}
+                </p> */}
+                {/* <p className="text-gray-600 dark:text-gray-400">
+                  <span className="font-bold">Modifié le :</span>{" "}
+                  {new Date(collection.updated_at).toLocaleString()}
+                </p> */}
+                {collection.validated_at && (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    <span className="font-bold">Validé le :</span>{" "}
+                    {new Date(collection.validated_at).toLocaleString()}
+                  </p>
+                )}
+                {collection.validated_by && (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    <span className="font-bold">Validé par (ID) :</span>{" "}
+                    {collection.validated_by}
+                  </p>
+                )}
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Coordonnées GPS :</span>{" "}
                   {collection.gps_latitude && collection.gps_longitude
@@ -1687,22 +2109,22 @@ const CollectionDetails = () => {
                     : "Non spécifiées"}
                 </p> */}
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Postes de contrôle :</span>{" "}
-                  {collection.has_control_posts ? "Oui" : "Non"} (
+                  <span className="font-bold">{t("control_posts")} :</span>{" "}
+                  {collection.has_control_posts ? t("yes") : t("no")} (
                   {collection.control_posts_count || 0} postes)
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">
-                    Lieux des postes de contrôle :
-                  </span>{" "}
-                  {collection.control_locations || "Aucun"}
+                  <span className="font-bold">{t("control_locations")} :</span>{" "}
+                  {collection.control_locations || t("none")}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
-                  <span className="font-bold">Durée des contrôles :</span>{" "}
+                  <span className="font-bold">
+                    {t("control_duration_value")} :
+                  </span>{" "}
                   {collection.control_duration_value &&
                   collection.control_duration_type
                     ? `${collection.control_duration_value} ${collection.control_duration_type}`
-                    : "Non spécifiée"}
+                    : t("not_specified")}
                 </p>
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Jour de marché :</span>{" "}
@@ -1720,7 +2142,7 @@ const CollectionDetails = () => {
                   <span className="font-bold">Variation des prix :</span>{" "}
                   {collection.market_price_variation
                     ? `${collection.market_price_variation}%`
-                    : "Non spécifiée"}
+                    : t("not_specified")}
                 </p> */}
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">
@@ -1736,7 +2158,7 @@ const CollectionDetails = () => {
                 </p> */}
                 <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Autres difficultés :</span>{" "}
-                  {collection.other_difficulties || "Aucune"}
+                  {collection.other_difficulties || t("none")}
                 </p>
               </div>
             </div>
@@ -1744,7 +2166,7 @@ const CollectionDetails = () => {
         </ComponentCard>
 
         <ComponentCard
-          title={`Articles collectés (${
+          title={`${t("collection_items")} (${
             collection.collectionItems?.length || 0
           })`}
         >
@@ -1761,33 +2183,33 @@ const CollectionDetails = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                   <div className="space-y-1">
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Produit :</span>{" "}
+                      <span className="font-bold">{t("product")} :</span>{" "}
                       {item.product?.name ||
                         item.animal?.name ||
-                        "Non spécifié"}
+                        t("not_specified")}
                     </p>
                     {/* <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-bold">Code HS :</span>{" "}
                       {item.product?.HS_code || "Non spécifié"}
                     </p> */}
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Description :</span>{" "}
-                      {item.product?.description || "Non spécifiée"}
+                      <span className="font-bold">{t("description")} :</span>{" "}
+                      {item.product?.description || t("not_specified")}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Quantité :</span>{" "}
+                      <span className="font-bold">{t("quantity")} :</span>{" "}
                       {item.quantity} {item.unity?.symbol || ""}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Unité :</span>{" "}
-                      {item.unity?.name || "Non spécifiée"}
+                      <span className="font-bold">{t("unit")} :</span>{" "}
+                      {item.unity?.name || t("not_specified")}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Prix unitaire :</span>{" "}
+                      <span className="font-bold">{t("unit_price")} :</span>{" "}
                       {item.unit_price} FCFA
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Valeur totale :</span>{" "}
+                      <span className="font-bold">{t("total_value")} :</span>{" "}
                       {item.total_value} FCFA
                     </p>
                     {/* {item.product_quality && (
@@ -1810,7 +2232,7 @@ const CollectionDetails = () => {
                     )}
                     {item.harvest_period && (
                       <p className="text-gray-600 dark:text-gray-400">
-                        <span className="font-bold">Période de récolte :</span>{" "}
+                        <span className="font-bold">{t("harvest_period")} :</span>{" "}
                         {item.harvest_period}
                       </p>
                     )} */}
@@ -1827,24 +2249,14 @@ const CollectionDetails = () => {
                       {item.specific_destination || "Non spécifiée"}
                     </p> */}
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Poids unitaire local :</span>{" "}
+                      <span className="font-bold">
+                        {t("local_unit_weight")} :
+                      </span>{" "}
                       {item.local_unit_weight_kg} kg
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Poids total :</span>{" "}
+                      <span className="font-bold">{t("total_weight")} :</span>{" "}
                       {item.total_weight_kg} kg
-                    </p>
-                    <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Coût de chargement :</span>{" "}
-                      {item.loading_cost} FCFA
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      <span className="font-bold">Coût de déchargement :</span>{" "}
-                      {item.unloading_cost} FCFA
-                    </p>
-                    <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Coût de transport :</span>{" "}
-                      {item.transport_cost} FCFA
                     </p>
                     {/* <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-bold">Pays d'origine :</span>{" "}
@@ -1860,62 +2272,103 @@ const CollectionDetails = () => {
                     </p> */}
                     <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
-                        Enregistrement douanier :
+                        {t("customs_registration")} :
                       </span>{" "}
-                      {item.is_customs_registered ? "Oui" : "Non"}
+                      {item.is_customs_registered ? t("yes") : t("no")}
                     </p>
                     {item.customs_registration_number && (
                       <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">
-                          Numéro d'enregistrement :
+                          {t("customs_registration_number")} :
                         </span>{" "}
                         {item.customs_registration_number}
                       </p>
                     )}
                     {item.animal_count && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Nombre d'animaux :</span>{" "}
+                        <span className="font-bold">{t("animal_count")} :</span>{" "}
                         {item.animal_count}
                       </p>
                     )}
                     {item.animal_breed && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Race :</span>{" "}
+                        <span className="font-bold">{t("breed")} :</span>{" "}
                         {item.animal_breed}
                       </p>
                     )}
                     {item.animal_condition && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Condition :</span>{" "}
+                        <span className="font-bold">{t("condition")} :</span>{" "}
                         {item.animal_condition}
                       </p>
                     )}
                     {item.animal_gender && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Genre des animaux :</span>{" "}
+                        <span className="font-bold">
+                          {t("animal_gender")} :
+                        </span>{" "}
                         {item.animal_gender}
                       </p>
                     )}
                     {item.average_weight_kg && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Poids moyen :</span>{" "}
+                        <span className="font-bold">
+                          {t("average_weight")} :
+                        </span>{" "}
                         {item.average_weight_kg} kg
                       </p>
                     )}
+                    {item.animal_categories &&
+                      item.animal_categories.length > 0 && (
+                        <div className="text-gray-800 dark:text-gray-400">
+                          <span className="font-bold">
+                            {t("animal_categories")} :
+                          </span>
+                          <div className="ml-4 mt-1 space-y-1">
+                            {item.animal_categories.map(
+                              (category, catIndex) => {
+                                const getCategoryTranslation = (
+                                  categoryName: string
+                                ) => {
+                                  switch (categoryName.toLowerCase()) {
+                                    case "small":
+                                      return t("animal_category_small");
+                                    case "medium":
+                                      return t("animal_category_medium");
+                                    case "large":
+                                      return t("animal_category_large");
+                                    default:
+                                      return categoryName;
+                                  }
+                                };
+
+                                return (
+                                  <p key={catIndex} className="text-sm">
+                                    •{" "}
+                                    {getCategoryTranslation(category.category)}:{" "}
+                                    {category.qty} {t("animal_head_unit")}{" "}
+                                    {t("animal_price_at")} {category.price} FCFA
+                                  </p>
+                                );
+                              }
+                            )}
+                          </div>
+                        </div>
+                      )}
                   </div>
                   <div className="space-y-1">
-                    <p className="text-gray-800 dark:text-gray-400">
+                    {/* <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Pertes :</span>{" "}
                       {item.losses_quantity || "0"} ({item.losses_value || "0"}{" "}
                       FCFA)
-                    </p>
-                    {item.loss_reasons && (
+                    </p> */}
+                    {/* {item.loss_reasons && (
                       <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">Raisons des pertes :</span>{" "}
                         {item.loss_reasons}
                       </p>
-                    )}
-                    <p className="text-gray-800 dark:text-gray-400">
+                    )} */}
+                    {/* <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
                         Permis spéciaux requis :
                       </span>{" "}
@@ -1926,24 +2379,26 @@ const CollectionDetails = () => {
                         <span className="font-bold">Détails des permis :</span>{" "}
                         {item.special_permits_details}
                       </p>
-                    )}
-                    <p className="text-gray-800 dark:text-gray-400">
+                    )} */}
+                    {/* <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Frais spécifiques :</span>{" "}
                       {item.item_specific_fees || "0"} FCFA
-                    </p>
+                    </p> */}
                     {/* <p className="text-gray-600 dark:text-gray-400">
                       <span className="font-bold">Produit saisonnier :</span>{" "}
                       {item.is_seasonal_product ? "Oui" : "Non"}
                     </p> */}
                     {item.harvest_period && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Période de récolte :</span>{" "}
+                        <span className="font-bold">
+                          {t("harvest_period")} :
+                        </span>{" "}
                         {item.harvest_period}
                       </p>
                     )}
                     {item.item_notes && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Notes :</span>{" "}
+                        <span className="font-bold">{t("notes")} :</span>{" "}
                         {item.item_notes}
                       </p>
                     )}
@@ -1955,7 +2410,7 @@ const CollectionDetails = () => {
         </ComponentCard>
 
         <ComponentCard
-          title={`Contrôles effectués (${
+          title={`${t("collection_controls")} (${
             collection.collectionControls?.length || 0
           })`}
         >
@@ -1972,7 +2427,7 @@ const CollectionDetails = () => {
                   <div className="space-y-1">
                     <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
-                        Nom du service de contrôle :
+                        {t("control_service_name")} :
                       </span>{" "}
                       {control.service?.name ||
                         control.other_control_body ||
@@ -1981,38 +2436,40 @@ const CollectionDetails = () => {
                           : "Non spécifié")}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Lieu du contrôle :</span>{" "}
+                      <span className="font-bold">
+                        {t("control_location")} :
+                      </span>{" "}
                       {control.location}
                     </p>
-                    <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Nombre de postes :</span>{" "}
+                    {/* <p className="text-gray-800 dark:text-gray-400">
+                      <span className="font-bold">{t("control_posts_count")} :</span>{" "}
                       {control.control_posts_count}
-                    </p>
-                    <p className="text-gray-800 dark:text-gray-400">
+                    </p> */}
+                    {/* <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Frais payés :</span>{" "}
                       {control.fees_paid || "0"} FCFA
-                    </p>
-                    <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Montant du paiement :</span>{" "}
+                    </p> */}
+                    {/* <p className="text-gray-800 dark:text-gray-400">
+                      <span className="font-bold">{t("payment_amount")} :</span>{" "}
                       {control.payment_amount || "0"} FCFA
-                    </p>
-                    <p className="text-gray-800 dark:text-gray-400">
+                    </p> */}
+                    {/* <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Durée :</span>{" "}
                       {control.control_duration || "Non spécifiée"}{" "}
                       {control.duration_type || ""}
+                    </p> */}
+                    <p className="text-gray-800 dark:text-gray-400">
+                      <span className="font-bold">{t("tax_type")} :</span>{" "}
+                      {control.taxType?.name || t("not_specified")}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Type de taxe :</span>{" "}
-                      {control.taxType?.name || "Non spécifié"}
-                    </p>
-                    <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Autre type de taxe :</span>{" "}
-                      {control.other_tax_type || "Aucun"}
+                      <span className="font-bold">{t("other_tax_type")} :</span>{" "}
+                      {control.other_tax_type || t("none")}
                     </p>
                   </div>
                   <div className="space-y-1">
                     {/* <p className="text-gray-600 dark:text-gray-400">
-                      <span className="font-bold">Résultat :</span>
+                      <span className="font-bold">{t("validation_result")} :</span>
                       <span
                         className={`ml-1 px-2 py-1 rounded text-xs ${
                           control.control_result === "passed"
@@ -2024,37 +2481,39 @@ const CollectionDetails = () => {
                       </span>
                     </p> */}
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Frais payés (Oui/Non) :</span>{" "}
-                      {control.fees_paid_yes_no ? "Oui" : "Non"}
+                      <span className="font-bold">
+                        {t("fees_paid")} (Oui/Non) :
+                      </span>{" "}
+                      {control.fees_paid_yes_no ? t("yes") : t("no")}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">A un reçu :</span>{" "}
-                      {control.has_receipt ? "Oui" : "Non"}
+                      <span className="font-bold">{t("has_receipt")} :</span>{" "}
+                      {control.has_receipt ? t("yes") : t("no")}
                     </p>
-                    <p className="text-gray-800 dark:text-gray-400">
+                    {/* <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">Poste de paiement :</span>{" "}
                       {control.fees_payment_post || "Non spécifié"}
-                    </p>
+                    </p> */}
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Montant du paiement :</span>{" "}
+                      <span className="font-bold">{t("payment_amount")} :</span>{" "}
                       {control.fees_payment_amount || "0"} FCFA
                     </p>
-                    <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Frais illégaux payés :</span>{" "}
+                    {/* <p className="text-gray-800 dark:text-gray-400">
+                      <span className="font-bold">{t("illegal_fees_paid")} :</span>{" "}
                       {control.illegal_fees_paid ? "Oui" : "Non"}
-                    </p>
-                    <p className="text-gray-800 dark:text-gray-400">
+                    </p> */}
+                    {/* <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
                         Poste des frais illégaux :
                       </span>{" "}
                       {control.illegal_fees_post || "Aucun"}
-                    </p>
-                    <p className="text-gray-800 dark:text-gray-400">
+                    </p> */}
+                    {/* <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
                         Montant des frais illégaux :
                       </span>{" "}
                       {control.illegal_fees_amount || "0"} FCFA
-                    </p>
+                    </p> */}
                   </div>
                   <div className="space-y-1">
                     {/* <p className="text-gray-600 dark:text-gray-400">
@@ -2071,27 +2530,29 @@ const CollectionDetails = () => {
                     </p> */}
                     <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
-                        Temps d'arrêt par type de poste :
+                        {t("stop_time_per_post_type")} :
                       </span>{" "}
                       {control.stop_time_per_post_type || "Non spécifié"}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">
-                        Type de temps de passage frontière :
+                        {t("border_crossing_time_type")} :
                       </span>{" "}
                       {control.border_crossing_time_type || "Non spécifié"}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Problèmes :</span>{" "}
-                      {control.control_issues || "Aucun"}
+                      <span className="font-bold">{t("control_issues")} :</span>{" "}
+                      {control.control_issues || t("none")}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Autres difficultés :</span>{" "}
-                      {control.other_difficulties || "Aucune"}
+                      <span className="font-bold">
+                        {t("other_difficulties")} :
+                      </span>{" "}
+                      {control.other_difficulties || t("none")}
                     </p>
                     {control.notes && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Notes :</span>{" "}
+                        <span className="font-bold">{t("notes")} :</span>{" "}
                         {control.notes}
                       </p>
                     )}
@@ -2103,7 +2564,9 @@ const CollectionDetails = () => {
         </ComponentCard>
 
         <ComponentCard
-          title={`Validations (${workflow?.validation_history?.length || 0})`}
+          title={`${t("validations")} (${
+            workflow?.validation_history?.length || 0
+          })`}
         >
           <div className="space-y-3">
             {workflow?.validation_history?.map((validation, index) => (
@@ -2112,16 +2575,21 @@ const CollectionDetails = () => {
                 className="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
               >
                 <h4 className="font-bold text-gray-800 dark:text-gray-200 mb-2">
-                  Validation {index + 1} - Niveau {validation.validation_level}
+                  {t("validations")} {index + 1} - {t("validation_level")}{" "}
+                  {validation.validation_level}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="space-y-1">
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Action :</span>{" "}
+                      <span className="font-bold">
+                        {t("validation_action")} :
+                      </span>{" "}
                       {validation.validation_action}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Résultat :</span>
+                      <span className="font-bold">
+                        {t("validation_result")} :
+                      </span>
                       <span
                         className={`ml-1 px-2 py-1 rounded text-xs ${
                           validation.validation_result === "approved"
@@ -2135,22 +2603,24 @@ const CollectionDetails = () => {
                       </span>
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Score de qualité :</span>{" "}
-                      {validation.data_quality_score || "Non évalué"}
+                      <span className="font-bold">
+                        {t("data_quality_score")} :
+                      </span>{" "}
+                      {validation.data_quality_score || t("not_specified")}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Priorité :</span>{" "}
-                      {validation.priority_level || "Non spécifié"}
+                      <span className="font-bold">{t("priority")} :</span>{" "}
+                      {validation.priority_level || t("not_specified")}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">Soumis le :</span>{" "}
+                      <span className="font-bold">{t("submitted_at")} :</span>{" "}
                       {validation.submitted_at
                         ? new Date(validation.submitted_at).toLocaleString()
-                        : "Non spécifié"}
+                        : t("not_specified")}
                     </p>
                     {validation.validated_at && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Validé le :</span>{" "}
+                        <span className="font-bold">{t("validated_at")} :</span>{" "}
                         {new Date(validation.validated_at).toLocaleString()}
                       </p>
                     )}
@@ -2158,20 +2628,22 @@ const CollectionDetails = () => {
                   <div className="space-y-1">
                     {validation.validation_notes && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Notes :</span>{" "}
+                        <span className="font-bold">{t("notes")} :</span>{" "}
                         {validation.validation_notes}
                       </p>
                     )}
                     {validation.rejection_reason && (
                       <p className="text-gray-800 dark:text-gray-400">
-                        <span className="font-bold">Raison du rejet :</span>{" "}
+                        <span className="font-bold">
+                          {t("rejection_reason")} :
+                        </span>{" "}
                         {validation.rejection_reason}
                       </p>
                     )}
                     {validation.correction_instructions && (
                       <p className="text-gray-800 dark:text-gray-400">
                         <span className="font-bold">
-                          Instructions de correction :
+                          {t("correction_instructions")} :
                         </span>{" "}
                         {validation.correction_instructions}
                       </p>
@@ -2200,8 +2672,8 @@ const CollectionDetails = () => {
         visible={showValidationDialog}
         header={
           userInfo?.role_id === 4
-            ? "Valider la collecte (Chef d'équipe)"
-            : "Valider la collecte (Superviseur)"
+            ? t("validate_collection_team_manager")
+            : t("validate_collection_supervisor")
         }
         modal
         style={{ width: "40rem" }}
@@ -2209,12 +2681,11 @@ const CollectionDetails = () => {
       >
         <div className="p-4 space-y-4">
           <p className="text-gray-800 dark:text-gray-400">
-            Êtes-vous sûr de vouloir valider cette collecte ? Cette action ne
-            peut pas être annulée.
+            {t("validation_confirmation")}
           </p>
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Score de qualité des données (0-100)
+              {t("quality_score_label")}
             </label>
             <input
               type="number"
@@ -2226,24 +2697,24 @@ const CollectionDetails = () => {
                 setDataQualityScore(value === "" ? null : Number(value));
               }}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Score de qualité (0-100)"
+              placeholder={t("quality_score_placeholder")}
             />
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Notes de validation (optionnel)
+              {t("validation_notes_optional")}
             </label>
             <textarea
               value={validationNotes}
               onChange={(e) => setValidationNotes(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               rows={3}
-              placeholder="Ajoutez des notes sur la validation..."
+              placeholder={t("validation_notes_placeholder")}
             />
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-3">
             <Button
-              label="Annuler"
+              label={t("cancel")}
               icon="pi pi-times"
               style={{
                 backgroundColor: "#00277F",
@@ -2255,7 +2726,7 @@ const CollectionDetails = () => {
             />
 
             <Button
-              label="Valider"
+              label={t("validate")}
               icon="pi pi-check"
               className="!bg-green-600 !hover:bg-green-700 w-full sm:w-auto text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
               loading={isValidating}
@@ -2270,8 +2741,8 @@ const CollectionDetails = () => {
         visible={showRejectDialog}
         header={
           userInfo?.role_id === 4
-            ? "Rejeter la collecte (Chef d'équipe)"
-            : "Rejeter la collecte (Superviseur)"
+            ? t("reject_collection_team_manager")
+            : t("reject_collection_supervisor")
         }
         modal
         style={{ width: "40rem" }}
@@ -2279,25 +2750,24 @@ const CollectionDetails = () => {
       >
         <div className="p-4 space-y-4">
           <p className="text-gray-800 dark:text-gray-400">
-            Êtes-vous sûr de vouloir rejeter cette collecte ? Cette action ne
-            peut pas être annulée.
+            {t("rejection_confirmation")}
           </p>
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-              Raison du rejet (obligatoire)
+              {t("rejection_reason_label")}
             </label>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
               rows={4}
-              placeholder="Expliquez pourquoi cette collecte est rejetée..."
+              placeholder={t("rejection_reason_placeholder")}
               required
             />
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-3">
             <Button
-              label="Annuler"
+              label={t("cancel")}
               icon="pi pi-times"
               style={{
                 backgroundColor: "#00277F",
@@ -2309,7 +2779,7 @@ const CollectionDetails = () => {
             />
 
             <Button
-              label="Rejeter"
+              label={t("reject")}
               icon="pi pi-times"
               className="!bg-red-600 !hover:bg-red-700 w-full sm:w-auto text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
               loading={isRejecting}

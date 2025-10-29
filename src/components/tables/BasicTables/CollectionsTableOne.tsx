@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Toast } from "primereact/toast";
@@ -365,6 +365,8 @@ const CollectionsTableOne = () => {
   const toast = useRef<Toast>(null);
   const navigate = useNavigate();
   const { userInfo } = useAuth();
+  const { t, i18n } = useTranslation();
+  const [, forceUpdate] = useState({});
 
   // Fonction pour récupérer les collectes de bétail
   const fetchData = async () => {
@@ -391,7 +393,7 @@ const CollectionsTableOne = () => {
           // Chef d'équipe : utiliser collection_status
           searchParams.collection_status = validationStatus;
           response = await axiosInstance.get<ApiResponse>(
-            "/api/trade-flow/collections/by-validation-status",
+            "/trade-flow/collections/by-validation-status",
             {
               params: searchParams,
             }
@@ -401,7 +403,7 @@ const CollectionsTableOne = () => {
           searchParams.validation_status = validationStatus;
           searchParams.validation_level = "2";
           response = await axiosInstance.get<ApiResponse>(
-            "/api/trade-flow/collections/by-validation-status",
+            "/trade-flow/collections/by-validation-status",
             {
               params: searchParams,
             }
@@ -421,7 +423,7 @@ const CollectionsTableOne = () => {
         }
 
         response = await axiosInstance.get<ApiResponse>(
-          "/api/trade-flow/agents/collections",
+          "/trade-flow/agents/collections",
           {
             params: searchParams,
           }
@@ -487,7 +489,7 @@ const CollectionsTableOne = () => {
             try {
               // Récupérer les informations de workflow pour avoir les statuts de validation complets
               const workflowResponse = await axiosInstance.get(
-                `/api/trade-flow/collections/${collection.id}/workflow`
+                `/trade-flow/collections/${collection.id}/workflow`
               );
 
               if (workflowResponse.data.success) {
@@ -628,6 +630,11 @@ const CollectionsTableOne = () => {
     fetchData();
   }, [currentPage, rowsPerPage, globalFilter, validationStatus]);
 
+  // Force le re-rendu quand la langue change
+  useEffect(() => {
+    forceUpdate({});
+  }, [i18n.language]);
+
   const handleViewDetails = (collection: Collection) => {
     // Passer les données de la collecte via l'état de navigation
     navigate(`/collection/${collection.id}`, {
@@ -655,22 +662,24 @@ const CollectionsTableOne = () => {
     }
   };
 
-  const { t, i18n } = useTranslation();
-
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
   };
 
-  const actionBodyTemplate = (rowData: Collection) => {
-    return (
-      <button
-        onClick={() => handleViewDetails(rowData)}
-        className="px-3 py-1 text-sm text-white bg-green-600 rounded "
-      >
-        Voir détails
-      </button>
-    );
-  };
+  const actionBodyTemplate = useMemo(() => {
+    return (rowData: Collection) => {
+      const currentLang = i18n.language;
+      return (
+        <button
+          onClick={() => handleViewDetails(rowData)}
+          className="px-3 py-1 text-sm text-white bg-green-600 rounded"
+          key={`${rowData.id}-${currentLang}`}
+        >
+          {t("view_details")}
+        </button>
+      );
+    };
+  }, [i18n.language, t]);
 
   const collectorBodyTemplate = (rowData: Collection) => {
     return (
@@ -1049,6 +1058,7 @@ const CollectionsTableOne = () => {
           </div>
         )}
         <DataTable
+          key={`datatable-${i18n.language}`}
           value={tableData}
           loading={isLoading}
           responsiveLayout="scroll"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Toast } from "primereact/toast";
@@ -46,6 +46,7 @@ const ReportsTables = () => {
   const navigate = useNavigate();
 
   const { t, i18n } = useTranslation();
+  const [, forceUpdate] = useState({});
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -118,6 +119,11 @@ const ReportsTables = () => {
   useEffect(() => {
     fetchData();
   }, [navigate]);
+
+  // Force le re-rendu quand la langue change
+  useEffect(() => {
+    forceUpdate({});
+  }, [i18n.language]);
 
   // Gestion de la pagination
   const onPageChange = (event: any) => {
@@ -198,16 +204,20 @@ const ReportsTables = () => {
   };
 
   // Colonne des actions
-  const actionBodyTemplate = (rowData: Reporting) => {
-    return (
-      <button
-        onClick={() => setSelectedReporting(rowData)}
-        className="px-3 py-1 text-sm text-white bg-blue-900 rounded"
-      >
-        Voir détails
-      </button>
-    );
-  };
+  const actionBodyTemplate = useMemo(() => {
+    return (rowData: Reporting) => {
+      const currentLang = i18n.language;
+      return (
+        <button
+          onClick={() => setSelectedReporting(rowData)}
+          className="px-3 py-1 text-sm text-white bg-blue-900 rounded"
+          key={`${rowData.id}-${currentLang}`}
+        >
+          {t("view_details")}
+        </button>
+      );
+    };
+  }, [i18n.language, t]);
 
   // Détails du reporting dans la modale
   const renderReportingDetails = () => {
@@ -221,7 +231,8 @@ const ReportsTables = () => {
               <strong>{t("title")} :</strong> {selectedReporting.title}
             </p>
             <p>
-              <strong>{t("description")} :</strong> {selectedReporting.description}
+              <strong>{t("description")} :</strong>{" "}
+              {selectedReporting.description}
             </p>
           </div>
           <div>
@@ -258,82 +269,85 @@ const ReportsTables = () => {
         <h1 className="page-title">Liste des Rapports</h1>
         <p className="page-subtitle">Gestion et consultation des rapports</p>
       </div>
-      
+
       <div className="content-card">
         <div className="content-card-header">
           <h2 className="content-card-title">{t("reporting_list")}</h2>
         </div>
         <div className="content-card-body">
-        <DataTable
-          value={reportings || []}
-          loading={loading}
-          responsiveLayout="scroll"
-          showGridlines
-          rows={rowsPerPage}
-          first={(currentPage - 1) * rowsPerPage}
-          totalRecords={totalRecords}
-          onPage={onPageChange}
-          filterDisplay="row"
-          globalFilterFields={["title", "description", "type"]}
-          emptyMessage="Aucun reporting trouvé."
-          paginator
-          rowsPerPageOptions={[5, 10, 25]}
-        >
-          <Column
-            field="title"
-            header={t("title")}
-            filter
-            filterPlaceholder="Rechercher un titre"
-            body={titleBodyTemplate}
-            style={{ width: "25%" }}
-          />
-          <Column
-            field="description"
-            header={t("description")}
-            filter
-            filterPlaceholder="Rechercher une description"
-            body={descriptionBodyTemplate}
-            style={{ width: "35%" }}
-          />
-          <Column
-            field="type"
-            header={t("type")}
-            filter
-            filterElement={typeFilterTemplate}
-            body={(rowData) => rowData.type}
-            style={{ width: "5%" }}
-          />
-          <Column
-            field="createdAt"
-            header={t("date_creation")}
-            filter
-            filterElement={dateRangeFilterTemplate}
-            showFilterMenu={false}
-            body={(rowData) => new Date(rowData.createdAt).toLocaleDateString()}
-            style={{ width: "15%" }}
-          />
-          <Column
-            header={t("Attachements")}
-            body={attachmentsBodyTemplate}
-            style={{ width: "15%" }}
-          />
-          <Column
-            header={t("details")}
-            body={actionBodyTemplate}
-            style={{ width: "20%" }}
-          />
-        </DataTable>
+          <DataTable
+            key={`datatable-${i18n.language}`}
+            value={reportings || []}
+            loading={loading}
+            responsiveLayout="scroll"
+            showGridlines
+            rows={rowsPerPage}
+            first={(currentPage - 1) * rowsPerPage}
+            totalRecords={totalRecords}
+            onPage={onPageChange}
+            filterDisplay="row"
+            globalFilterFields={["title", "description", "type"]}
+            emptyMessage="Aucun reporting trouvé."
+            paginator
+            rowsPerPageOptions={[5, 10, 25]}
+          >
+            <Column
+              field="title"
+              header={t("title")}
+              filter
+              filterPlaceholder="Rechercher un titre"
+              body={titleBodyTemplate}
+              style={{ width: "25%" }}
+            />
+            <Column
+              field="description"
+              header={t("description")}
+              filter
+              filterPlaceholder="Rechercher une description"
+              body={descriptionBodyTemplate}
+              style={{ width: "35%" }}
+            />
+            <Column
+              field="type"
+              header={t("type")}
+              filter
+              filterElement={typeFilterTemplate}
+              body={(rowData) => rowData.type}
+              style={{ width: "5%" }}
+            />
+            <Column
+              field="createdAt"
+              header={t("date_creation")}
+              filter
+              filterElement={dateRangeFilterTemplate}
+              showFilterMenu={false}
+              body={(rowData) =>
+                new Date(rowData.createdAt).toLocaleDateString()
+              }
+              style={{ width: "15%" }}
+            />
+            <Column
+              header={t("Attachements")}
+              body={attachmentsBodyTemplate}
+              style={{ width: "15%" }}
+            />
+            <Column
+              header={t("details")}
+              body={actionBodyTemplate}
+              style={{ width: "20%" }}
+            />
+          </DataTable>
         </div>
       </div>
       <Dialog
-        header={t('reporting_details')}
+        header={t("reporting_details")}
         visible={!!selectedReporting}
         style={{ width: "50vw" }}
         onHide={() => setSelectedReporting(null)}
         footer={
           <div>
             <Button
-              label={t('close')}
+              label={t("close")}
               icon="pi pi-times"
               className="p-button-sm p-button-secondary"
               onClick={() => setSelectedReporting(null)}
@@ -343,7 +357,7 @@ const ReportsTables = () => {
       >
         {renderReportingDetails()}
       </Dialog>
-      <Toast ref={toast} position='bottom-right' />
+      <Toast ref={toast} position="bottom-right" />
     </div>
   );
 };
