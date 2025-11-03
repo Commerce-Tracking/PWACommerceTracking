@@ -365,5 +365,21 @@
   "search_by_email": "Search by email",
   "collection": "Collection",
   "last_activity": "Last activity",
-  "close": "Close"
+  "close": "Close",
+
+  "pwa_update_available": "Update available",
+  "pwa_update_message": "A new version of the application is available. Would you like to update now?",
+  "pwa_update_now": "Update now",
+  "pwa_offline_ready": "App ready offline",
+  "pwa_offline_message": "The application now works offline.",
+  "pwa_offline_mode": "Offline mode - Data will be synchronized when connection returns",
+  "pwa_install_app": "Install app",
+  "pwa_install_tooltip": "Install this app on your device for quick access",
+  "pwa_install_waiting": "Installation will be available once all PWA criteria are met (valid icons, active Service Worker, etc.)",
+  "pwa_install_manual_tooltip": "Click to see installation instructions",
+  "pwa_install_manual_instructions": "To install the application:\n\n1. Browser menu (3 dots) at top right\n2. Click 'Install application'\n3. Or look for the install icon in the address bar\n\nIf the option doesn't appear, visit the site several times or test in build mode (npm run build && npm run preview)",
+  "pwa_install_banner_title": "Install app",
+  "pwa_install_banner_description": "Quick access from your home screen",
+  "pwa_install_now": "Install",
+  "pwa_install_mobile_instructions": "To install the application:\n\n1. Tap the menu (3 dots) at top right\n2. Select 'Add to home screen'\n3. Confirm installation\n\nThe app will appear on your home screen for quick access."
 }

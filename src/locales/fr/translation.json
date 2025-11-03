@@ -39,7 +39,6 @@
   "service": "Service",
   "loading_number": "Numéro de chargement",
 
-
   "obstacles_list": "Liste des types d'entraves",
   "obstacles_name": "Nom du type d'entrave",
 
@@ -133,10 +132,8 @@
   "reporting_details": "Reporting details",
   "Attachements": "Attachements",
 
-
   "actions": "Actions",
   "transport_details": "Détails du transport",
-
 
   "average_unit_price": "Prix unitaire moyen",
 
@@ -372,5 +369,22 @@
   "search_by_phone": "Rechercher par téléphone",
   "search_by_email": "Rechercher par email",
   "collection": "Collecte",
-  "last_activity": "Dernière activité"
+  "last_activity": "Dernière activité",
+  "close": "Fermer",
+
+  "pwa_update_available": "Mise à jour disponible",
+  "pwa_update_message": "Une nouvelle version de l'application est disponible. Voulez-vous la mettre à jour maintenant ?",
+  "pwa_update_now": "Mettre à jour maintenant",
+  "pwa_offline_ready": "Application prête hors ligne",
+  "pwa_offline_message": "L'application fonctionne maintenant hors ligne.",
+  "pwa_offline_mode": "Mode hors ligne - Les données seront synchronisées lorsque la connexion reviendra",
+  "pwa_install_app": "Installer l'application",
+  "pwa_install_tooltip": "Installer cette application sur votre appareil pour un accès rapide",
+  "pwa_install_waiting": "L'installation sera disponible une fois tous les critères PWA remplis (icônes valides, Service Worker actif, etc.)",
+  "pwa_install_manual_tooltip": "Cliquez pour voir les instructions d'installation",
+  "pwa_install_manual_instructions": "Pour installer l'application :\n\n1. Menu navigateur (3 points) en haut à droite\n2. Cliquez sur 'Installer l'application'\n3. Ou cherchez l'icône d'installation dans la barre d'adresse\n\nSi l'option n'apparaît pas, visitez le site plusieurs fois ou testez en mode build (npm run build && npm run preview)",
+  "pwa_install_banner_title": "Installer l'application",
+  "pwa_install_banner_description": "Accès rapide depuis votre écran d'accueil",
+  "pwa_install_now": "Installer",
+  "pwa_install_mobile_instructions": "Pour installer l'application :\n\n1. Appuyez sur le menu (3 points) en haut à droite\n2. Sélectionnez 'Ajouter à l'écran d'accueil'\n3. Confirmez l'installation\n\nL'application apparaîtra sur votre écran d'accueil pour un accès rapide."
 }
