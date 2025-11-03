@@ -5,7 +5,6 @@ import { useSidebar } from "../context/SidebarContext";
 import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 import UserDropdown from "../components/header/UserDropdown";
 import LanguageSwitcher from "../components/common/LanguageSwitcher.tsx";
-import PWAInstallButton from "../components/pwa/PWAInstallButton";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -84,14 +83,14 @@ const AppHeader: React.FC = () => {
             {/* Cross Icon */}
           </button>
 
-          <Link to="/" className="lg:hidden">
+          <Link to="/" className="lg:hidden flex items-center">
             <img
-              className="dark:hidden"
+              className="dark:hidden h-25 w-auto max-w-[140px] sm:max-w-[180px]"
               src="./images/logo/Plan de travail 1.png"
               alt="Logo"
             />
             <img
-              className="hidden dark:block"
+              className="hidden dark:block h-25 w-auto max-w-[140px] sm:max-w-[180px]"
               src="./images/logo/Plan de travail 1.svg"
               alt="Logo"
             />
@@ -161,7 +160,6 @@ const AppHeader: React.FC = () => {
             {/* <!-- Dark Mode Toggler --> */}
             {/*<ThemeToggleButton />*/}
             {/* <!-- Dark Mode Toggler --> */}
-            <PWAInstallButton />
             <LanguageSwitcher />
             {/* <!-- Notification Menu Area --> */}
           </div>

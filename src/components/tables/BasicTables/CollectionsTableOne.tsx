@@ -790,22 +790,22 @@ const CollectionsTableOne = () => {
         // La collection a été traitée par le superviseur
         if (rowData.supervisor_validation_result === "approved") {
           displayStatus = "validated";
-          statusLabel = "Validée par superviseur";
+          statusLabel = "Validée par l'éditeur";
         } else if (rowData.supervisor_validation_result === "rejected") {
           displayStatus = "rejected";
           statusLabel = "Rejetée par superviseur";
         } else {
           displayStatus = "pending";
-          statusLabel = "En attente superviseur";
+          statusLabel = "En attente de l'éditeur";
         }
       } else if (rowData.status === "validated") {
         // Collection validée par le chef d'équipe mais pas encore traitée par le superviseur
         displayStatus = "pending";
-        statusLabel = "En attente superviseur";
+        statusLabel = "En attente de l'éditeur";
       } else {
         // Toutes les autres collections sont en attente du superviseur
         displayStatus = "pending";
-        statusLabel = "En attente superviseur";
+        statusLabel = "En attente de l'éditeur";
       }
     }
 
