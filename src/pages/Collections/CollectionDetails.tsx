@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Toast } from "primereact/toast";
+import { toast } from "sonner";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import axiosInstance from "../../api/axios";
@@ -583,7 +583,6 @@ const CollectionDetails = () => {
         return type;
     }
   };
-  const toast = useRef<Toast>(null);
 
   const [collection, setCollection] = useState<Collection | null>(null);
   const [workflow, setWorkflow] = useState<any>(null);
@@ -746,14 +745,12 @@ const CollectionDetails = () => {
         }
 
         if (collectionResponse.data.errors || collectionResponse.data.except) {
-          toast.current?.show({
-            severity: "error",
-            summary: "Erreur",
-            detail:
+          toast.error("Erreur", {
+            description:
               collectionResponse.data.errors ||
               collectionResponse.data.except ||
               "Erreur inconnue",
-            life: 5000,
+            duration: 5000,
           });
         }
       } catch (err: any) {
@@ -821,11 +818,9 @@ const CollectionDetails = () => {
           console.log("Flag isResubmission défini à true");
         }
 
-        toast.current?.show({
-          severity: "success",
-          summary: t("validation_successful"),
-          detail: response.data.message,
-          life: 5000,
+        toast.success(t("validation_successful"), {
+          description: response.data.message,
+          duration: 5000,
         });
 
         // Recharger les données de la collecte
@@ -905,11 +900,9 @@ const CollectionDetails = () => {
         setDataQualityScore(null);
       } else {
         console.error("Échec de la validation:", response.data);
-        toast.current?.show({
-          severity: "error",
-          summary: t("validation_error"),
-          detail: response.data.message || "Erreur lors de la validation",
-          life: 5000,
+        toast.error(t("validation_error"), {
+          description: response.data.message || "Erreur lors de la validation",
+          duration: 5000,
         });
       }
     } catch (err: any) {
@@ -926,11 +919,9 @@ const CollectionDetails = () => {
         err.message ||
         "Erreur lors de la validation de la collecte";
 
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur de validation",
-        detail: errorMessage,
-        life: 5000,
+      toast.error("Erreur de validation", {
+        description: errorMessage,
+        duration: 5000,
       });
     } finally {
       setIsValidating(false);
@@ -979,11 +970,9 @@ const CollectionDetails = () => {
           console.log("Flag isResubmission défini à true (reject)");
         }
 
-        toast.current?.show({
-          severity: "success",
-          summary: t("collection_rejected"),
-          detail: response.data.message,
-          life: 5000,
+        toast.success(t("collection_rejected"), {
+          description: response.data.message,
+          duration: 5000,
         });
 
         // Recharger les données de la collecte
@@ -1053,11 +1042,9 @@ const CollectionDetails = () => {
         setRejectReason("");
       } else {
         console.error("Échec du rejet:", response.data);
-        toast.current?.show({
-          severity: "error",
-          summary: t("rejection_error"),
-          detail: response.data.message || "Erreur lors du rejet",
-          life: 5000,
+        toast.error(t("rejection_error"), {
+          description: response.data.message || "Erreur lors du rejet",
+          duration: 5000,
         });
       }
     } catch (err: any) {
@@ -1075,11 +1062,9 @@ const CollectionDetails = () => {
         err.message ||
         "Erreur lors du rejet de la collecte";
 
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur de rejet",
-        detail: errorMessage,
-        life: 5000,
+      toast.error("Erreur de rejet", {
+        description: errorMessage,
+        duration: 5000,
       });
     } finally {
       setIsRejecting(false);
@@ -1119,11 +1104,9 @@ const CollectionDetails = () => {
       );
 
       if (response.data.success) {
-        toast.current?.show({
-          severity: "success",
-          summary: t("collection_validated"),
-          detail: response.data.message,
-          life: 5000,
+        toast.success(t("collection_validated"), {
+          description: response.data.message,
+          duration: 5000,
         });
 
         // Recharger les données de la collecte
@@ -1191,11 +1174,9 @@ const CollectionDetails = () => {
         err.message ||
         "Erreur lors de la validation par le superviseur";
 
-      toast.current?.show({
-        severity: "error",
-        summary: "Erreur de validation",
-        detail: errorMessage,
-        life: 5000,
+      toast.error("Erreur de validation", {
+        description: errorMessage,
+        duration: 5000,
       });
     } finally {
       setIsValidating(false);
@@ -2789,8 +2770,6 @@ const CollectionDetails = () => {
           </div>
         </div>
       </Dialog>
-
-      <Toast ref={toast} position="bottom-right" />
     </div>
   );
 };

@@ -43,6 +43,7 @@ import AgriculturalCollectionsTables from "./pages/Tables/AgriculturalCollection
 import PWAUpdatePrompt from "./components/pwa/PWAUpdatePrompt";
 import OfflineIndicator from "./components/pwa/OfflineIndicator";
 import PWAInstallBanner from "./components/pwa/PWAInstallBanner";
+import { Toaster } from "sonner";
 
 export default function App() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
             <PWAUpdatePrompt />
             <OfflineIndicator />
             <PWAInstallBanner />
+            <Toaster position="bottom-right" richColors />
             <ScrollToTop />
             <Routes>
               {/* Dashboard Layout */}
