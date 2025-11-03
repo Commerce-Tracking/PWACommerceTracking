@@ -289,6 +289,20 @@ interface Collection {
       created_at: string;
       updated_at: string;
     } | null;
+    taxTypes?: Array<{
+      id: number;
+      collection_control_id: number;
+      tax_type_id: number;
+      created_at: string;
+      updated_at: string;
+      taxType: {
+        id: number;
+        name: string;
+        description: string;
+        created_at: string;
+        updated_at: string;
+      };
+    }>;
   }>;
   // Champs de validation
   validated_by_team_manager?: boolean;
@@ -781,7 +795,7 @@ const CollectionDetails = () => {
           validationNotes ||
           (userInfo?.role_id === 4
             ? "Validation effectuée par le chef d'équipe"
-            : "Validation effectuée par le superviseur"),
+            : "Validation effectuée par l'éditeur"),
       };
 
       console.log(
@@ -1079,7 +1093,7 @@ const CollectionDetails = () => {
 
       const requestData = {
         validation_notes:
-          validationNotes.trim() || "Validation complète par le superviseur",
+          validationNotes.trim() || "Validation complète par l'éditeur",
         data_quality_score: dataQualityScore,
         validation_metadata: {
           validation_method: "field_verification",
@@ -1675,10 +1689,10 @@ const CollectionDetails = () => {
                     {collection.collectionPoint.description}
                   </p>
                 )} */}
-                <p className="text-gray-800 dark:text-gray-400">
+                {/* <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">{t("locality")} :</span>{" "}
                   {collection.collectionPoint?.locality || t("not_specified")}
-                </p>
+                </p> */}
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Région :</span>{" "}
                   {collection.collectionPoint?.region || "Non spécifiée"}
@@ -1969,14 +1983,18 @@ const CollectionDetails = () => {
                     : t("not_specified")}
                   {/* Debug: {JSON.stringify(collection.control_posts_count)} */}
                 </p>
-                {collection.control_locations && (
-                  <p className="text-gray-800 dark:text-gray-400">
-                    <span className="font-bold">
-                      {t("control_locations")} :
-                    </span>{" "}
-                    {collection.control_locations}
-                  </p>
-                )}
+                {collection.collectionControls &&
+                  collection.collectionControls.length > 0 && (
+                    <p className="text-gray-800 dark:text-gray-400">
+                      <span className="font-bold">
+                        {t("control_locations")} :
+                      </span>{" "}
+                      {collection.collectionControls
+                        .map((control) => control.location)
+                        .filter((loc) => loc && loc.trim())
+                        .join(", ") || t("none")}
+                    </p>
+                  )}
                 {collection.control_duration_type && (
                   <p className="text-gray-800 dark:text-gray-400">
                     <span className="font-bold">
@@ -2096,9 +2114,15 @@ const CollectionDetails = () => {
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">{t("control_locations")} :</span>{" "}
-                  {collection.control_locations || t("none")}
+                  {collection.collectionControls &&
+                  collection.collectionControls.length > 0
+                    ? collection.collectionControls
+                        .map((control) => control.location)
+                        .filter((loc) => loc && loc.trim())
+                        .join(", ") || t("none")
+                    : t("none")}
                 </p>
-                <p className="text-gray-800 dark:text-gray-400">
+                {/* <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">
                     {t("control_duration_value")} :
                   </span>{" "}
@@ -2106,7 +2130,7 @@ const CollectionDetails = () => {
                   collection.control_duration_type
                     ? `${collection.control_duration_value} ${collection.control_duration_type}`
                     : t("not_specified")}
-                </p>
+                </p> */}
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Jour de marché :</span>{" "}
                   {collection.market_day || "Non spécifié"}
@@ -2441,7 +2465,22 @@ const CollectionDetails = () => {
                     </p> */}
                     <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">{t("tax_type")} :</span>{" "}
-                      {control.taxType?.name || t("not_specified")}
+                      {control.taxTypes && control.taxTypes.length > 0 ? (
+                        <span className="inline-flex flex-wrap gap-1">
+                          {control.taxTypes.map((taxTypeItem, taxIndex) => (
+                            <span
+                              key={taxTypeItem.id}
+                              className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-sm"
+                            >
+                              {taxTypeItem.taxType.name}
+                            </span>
+                          ))}
+                        </span>
+                      ) : control.taxType?.name ? (
+                        control.taxType.name
+                      ) : (
+                        t("not_specified")
+                      )}
                     </p>
                     <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">{t("other_tax_type")} :</span>{" "}

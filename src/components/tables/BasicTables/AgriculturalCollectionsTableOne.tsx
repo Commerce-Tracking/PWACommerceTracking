@@ -860,7 +860,7 @@ const AgriculturalCollectionsTableOne = () => {
           return (
             <div className="flex items-center">
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                En attente superviseur
+                En attente de l'éditeur
               </span>
             </div>
           );
@@ -870,7 +870,7 @@ const AgriculturalCollectionsTableOne = () => {
         return (
           <div className="flex flex-col items-start">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-              En attente superviseur
+              En attente de l'éditeur
             </span>
             <div className="text-xs text-gray-500 mt-1">
               Validée par chef d'équipe le{" "}
@@ -889,7 +889,7 @@ const AgriculturalCollectionsTableOne = () => {
         return (
           <div className="flex flex-col items-start">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-              En attente superviseur
+              En attente de l'éditeur
             </span>
             <div className="text-xs text-gray-500 mt-1">
               Validée par chef d'équipe le{" "}
