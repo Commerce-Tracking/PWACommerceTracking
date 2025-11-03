@@ -40,6 +40,9 @@ import AddEntity from "./pages/entity/AddEntity.tsx";
 import EntityListPage from "./pages/entity/EntityListPage.tsx";
 import CollectionDetails from "./pages/Collections/CollectionDetails.tsx";
 import AgriculturalCollectionsTables from "./pages/Tables/AgriculturalCollectionsTables.tsx";
+import PWAUpdatePrompt from "./components/pwa/PWAUpdatePrompt";
+import OfflineIndicator from "./components/pwa/OfflineIndicator";
+import PWAInstallBanner from "./components/pwa/PWAInstallBanner";
 
 export default function App() {
   return (
@@ -48,6 +51,9 @@ export default function App() {
         {/*<PrimeReactProvider value={{locale: 'en'}}>*/}
         <ComplaintProvider>
           <ModalProvider>
+            <PWAUpdatePrompt />
+            <OfflineIndicator />
+            <PWAInstallBanner />
             <ScrollToTop />
             <Routes>
               {/* Dashboard Layout */}

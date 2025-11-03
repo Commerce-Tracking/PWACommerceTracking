@@ -122,6 +122,8 @@ export default function AuthProvider({ children }) {
       });
       console.log("LOGIN DATA: ");
       console.log(res.data);
+      console.log("Success value:", res.data.success);
+      console.log("Response structure:", JSON.stringify(res.data, null, 2));
 
       // Vérifier si la connexion est réussie selon la nouvelle structure
       if (res.data.success === true) {
@@ -134,8 +136,10 @@ export default function AuthProvider({ children }) {
 
         // Vérifier le rôle de l'utilisateur
         const roleId = user.role_id;
+        console.log("Role ID:", roleId);
+
         if (roleId !== 4 && roleId !== 5) {
-          console.log("Accès refusé : rôle non autorisé");
+          console.log("Accès refusé : rôle non autorisé. Role ID:", roleId);
           return {
             success: false,
             message:
@@ -172,17 +176,35 @@ export default function AuthProvider({ children }) {
 
         console.log("Connexion réussie !");
         console.log("Rôle utilisateur:", user.role?.name || `ID: ${roleId}`);
+
+        return {
+          success: true,
+          result: res.data.result,
+        };
       } else {
         console.log("Connexion échouée !");
-      }
+        console.log("Raison: success !== true");
+        console.log("Message d'erreur:", res.data.message || "Aucun message");
 
-      return res.data;
-    } catch (err) {
-      // @ts-ignore
+        return {
+          success: false,
+          message:
+            res.data.message ||
+            "La connexion a échoué. Veuillez vérifier vos identifiants.",
+        };
+      }
+    } catch (err: any) {
       console.error("Login error", err.response?.data || err.message);
+      console.error("Error details:", err);
+
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Erreur de connexion. Veuillez vérifier vos identifiants.";
+
       return {
         success: false,
-        message: "Erreur de connexion. Veuillez vérifier vos identifiants.",
+        message: errorMessage,
       };
     }
   };
@@ -201,10 +223,8 @@ export default function AuthProvider({ children }) {
       localStorage.setItem("userData", JSON.stringify(u));
 
       console.log("Profil récupéré avec succès !");
-    } catch (error) {
-      // @ts-ignore
+    } catch (error: any) {
       console.error("Error", error.response?.data || error.message);
-      // @ts-ignore
       if (error.response?.status === 401) {
         navigate("/signin");
       }
@@ -219,8 +239,7 @@ export default function AuthProvider({ children }) {
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
 
       console.log("Récupérée !");
-    } catch (err) {
-      // @ts-ignore
+    } catch (err: any) {
       console.error("Error", err.response?.data || err.message);
     }
   };

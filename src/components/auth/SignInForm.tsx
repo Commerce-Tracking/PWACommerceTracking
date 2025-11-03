@@ -22,7 +22,7 @@ export default function SignInForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(username, password);
+    console.log("Tentative de connexion avec:", username);
     try {
       const req = await login(username, password);
 
@@ -32,29 +32,33 @@ export default function SignInForm() {
           description: "Erreur interne.",
           content: (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Connexion échoué!
+              Connexion échouée!
             </p>
           ),
         });
       } else {
         if (req.success === false) {
+          console.log("Échec de connexion:", req.message);
           openModal({
             title: "Connexion échouée!",
-            description: req.message,
+            description:
+              req.message ||
+              "Identifiants incorrects. Veuillez vérifier votre email et votre mot de passe.",
             content: "",
           });
         } else {
-          console.log("Succes 2");
+          console.log("Connexion réussie !");
           await navigate("/");
         }
       }
     } catch (err) {
+      console.error("Erreur lors de la connexion:", err);
       openModal({
         title: "Alerte!",
-        description: "Erreur de connexion.",
+        description: "Erreur de connexion. Veuillez réessayer.",
         content: (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Login failed
+            Une erreur est survenue lors de la connexion.
           </p>
         ),
       });

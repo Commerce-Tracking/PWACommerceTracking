@@ -5,6 +5,7 @@ import { useSidebar } from "../context/SidebarContext";
 import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 import UserDropdown from "../components/header/UserDropdown";
 import LanguageSwitcher from "../components/common/LanguageSwitcher.tsx";
+import PWAInstallButton from "../components/pwa/PWAInstallButton";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -160,6 +161,7 @@ const AppHeader: React.FC = () => {
             {/* <!-- Dark Mode Toggler --> */}
             {/*<ThemeToggleButton />*/}
             {/* <!-- Dark Mode Toggler --> */}
+            <PWAInstallButton />
             <LanguageSwitcher />
             {/* <!-- Notification Menu Area --> */}
           </div>
