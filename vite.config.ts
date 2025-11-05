@@ -20,6 +20,10 @@ export default defineConfig(async () => {
         },
       }),
       VitePWA({
+        workbox: {
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 Mo
+        },
+
         registerType: "prompt",
         injectRegister: false,
         includeAssets: [
@@ -62,4 +66,3 @@ export default defineConfig(async () => {
     },
   };
 });
-
