@@ -56,6 +56,15 @@ async function generateIcons() {
 
   if (sharp) {
     try {
+      // Générer favicon.png (32x32 pour l'onglet du navigateur)
+      await sharp(sourceImage)
+        .resize(32, 32, {
+          fit: "contain",
+          background: { r: 0, g: 39, b: 127, alpha: 1 },
+        })
+        .toFile(faviconPath);
+      console.log("✅ favicon.png créé");
+
       // Générer pwa-192x192.png
       await sharp(sourceImage)
         .resize(192, 192, {
@@ -74,8 +83,8 @@ async function generateIcons() {
         .toFile(path.join(iconsDir, "pwa-512x512.png"));
       console.log("✅ pwa-512x512.png créé");
 
-      console.log("\n🎉 Icônes PWA créées avec succès !");
-      console.log("📍 Emplacement : public/icons/");
+      console.log("\n🎉 Icônes PWA et favicon créés avec succès !");
+      console.log("📍 Emplacement : public/icons/ et public/favicon.png");
       console.log(
         "\n🔄 Redémarrez votre serveur de développement pour voir le bouton d'installation."
       );
