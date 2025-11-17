@@ -107,7 +107,7 @@ const AddEntity = () => {
     return (
         <>
             <PageMeta
-                title="OFR | Ajouter une entité"
+                title="CT | Ajouter une entité"
                 description="Ajouter une nouvelle entité  pour Opération Fluidité Routière Agro-bétail"
             />
             <PageBreadcrumb pageTitle={t('add_entity')} />

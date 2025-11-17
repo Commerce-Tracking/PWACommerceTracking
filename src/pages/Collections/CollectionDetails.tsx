@@ -1379,7 +1379,7 @@ const CollectionDetails = () => {
   return (
     <div>
       <PageMeta
-        title="OFR | Détails de la collecte"
+        title="CT | Détails de la collecte"
         description="Détails de la collecte des agents"
       />
       <PageBreadcrumb pageTitle={`Détails de la collecte`} />
@@ -1550,10 +1550,10 @@ const CollectionDetails = () => {
                   <span className="font-bold">{t("operator_gender")} :</span>{" "}
                   {collection.operator_gender}
                 </p>
-                <p className="text-gray-800 dark:text-gray-400">
+                {/* <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">{t("operator_type")} :</span>{" "}
                   {collection.operator_type}
-                </p>
+                </p> */}
                 <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">{t("respondent_nature")} :</span>{" "}
                   {collection.respondent_nature}
@@ -1697,12 +1697,12 @@ const CollectionDetails = () => {
                   <span className="font-bold">Région :</span>{" "}
                   {collection.collectionPoint?.region || "Non spécifiée"}
                 </p> */}
-                {/* <p className="text-gray-600 dark:text-gray-400">
-                  <span className="font-bold">Type de point :</span>{" "}
+                <p className="text-gray-800 dark:text-gray-400">
+                  <span className="font-bold">Type de point de collecte :</span>{" "}
                   {collection.collectionPoint?.is_formal
-                    ? "Formel"
-                    : "Informel"}
-                </p> */}
+                    ? "Passage frontalier formel"
+                    : "Passage frontalier informel"}
+                </p>
                 {/* <p className="text-gray-600 dark:text-gray-400">
                   <span className="font-bold">Passage frontière :</span>{" "}
                   {collection.collectionPoint?.is_border_crossing
@@ -1845,12 +1845,12 @@ const CollectionDetails = () => {
                   <span className="font-bold">Genre de l'opérateur :</span>{" "}
                   {collection.operator_gender === "M" ? t("male") : t("female")}
                 </p>
-                <p className="text-gray-800 dark:text-gray-400">
+                {/* <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">Type d'opérateur :</span>{" "}
                   {collection.operator_type === "formal"
                     ? t("formal")
                     : t("informal")}
-                </p>
+                </p> */}
 
                 {/* Informations sur le répondant */}
                 <p className="text-gray-800 dark:text-gray-400">

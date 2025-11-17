@@ -255,12 +255,12 @@ export default function UserInfoCard() {
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Nom</Label>
-                    <Input type="text" value="OFR" />
+                    <Input type="text" value="CT" />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Email</Label>
-                    <Input type="text" value="admin@ofr.com" />
+                    <Input type="text" value="admin@CT.com" />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">

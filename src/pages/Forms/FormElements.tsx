@@ -15,7 +15,7 @@ export default function FormElements() {
   return (
     <div>
       <PageMeta
-        title="OFR | Admin"
+        title="CT | Admin"
         description="Opération Fluidité Routière Agro-bétail"
       />
       <PageBreadcrumb pageTitle="From Elements" />

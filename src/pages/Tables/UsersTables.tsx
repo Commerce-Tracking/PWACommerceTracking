@@ -23,7 +23,7 @@ export default function UsersTables() {
   return (
     <>
       <PageMeta
-        title="OFR | Admin"
+        title="CT | Admin"
         description="Opération Fluidité Routière Agro-bétail"
       />
       <PageBreadcrumb pageTitle={getPageTitle()} />

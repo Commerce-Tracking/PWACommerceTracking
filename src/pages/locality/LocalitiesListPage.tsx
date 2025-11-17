@@ -16,7 +16,7 @@ const LocalitiesListPage = () => {
   return (
     <>
       <PageMeta
-        title="OFR | Liste des localités"
+        title="CT | Liste des localités"
         description="Consulter la liste des localités pour Opération Fluidité Routière Agro-bétail"
       />
       <PageBreadcrumb pageTitle={t('locality_list')} />
