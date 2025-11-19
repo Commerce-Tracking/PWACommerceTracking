@@ -662,7 +662,7 @@ const CollectionDetails = () => {
               if (workflow.supervisor_validation) {
                 const isSupervisorValidated =
                   workflow.supervisor_validation.validation_result ===
-                    "approved" && workflow.supervisor_validation.validated_at;
+                  "approved" && workflow.supervisor_validation.validated_at;
 
                 console.log("=== DEBUG SUPERVISOR VALIDATION ===");
                 console.log(
@@ -753,7 +753,7 @@ const CollectionDetails = () => {
           );
           setError(
             collectionResponse.data.message ||
-              "Erreur lors de la récupération des données"
+            "Erreur lors de la récupération des données"
           );
           setIsLoading(false);
         }
@@ -882,7 +882,7 @@ const CollectionDetails = () => {
               if (workflow.supervisor_validation) {
                 const isSupervisorValidated =
                   workflow.supervisor_validation.validation_result ===
-                    "approved" && workflow.supervisor_validation.validated_at;
+                  "approved" && workflow.supervisor_validation.validated_at;
 
                 updatedCollection = {
                   ...updatedCollection,
@@ -1025,7 +1025,7 @@ const CollectionDetails = () => {
               if (workflow.supervisor_validation) {
                 const isSupervisorValidated =
                   workflow.supervisor_validation.validation_result ===
-                    "approved" && workflow.supervisor_validation.validated_at;
+                  "approved" && workflow.supervisor_validation.validated_at;
 
                 updatedCollection = {
                   ...updatedCollection,
@@ -1146,7 +1146,7 @@ const CollectionDetails = () => {
               if (workflow.supervisor_validation) {
                 const isSupervisorValidated =
                   workflow.supervisor_validation.validation_result ===
-                    "approved" && workflow.supervisor_validation.validated_at;
+                  "approved" && workflow.supervisor_validation.validated_at;
 
                 updatedCollection = {
                   ...updatedCollection,
@@ -1589,13 +1589,12 @@ const CollectionDetails = () => {
                 <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">{t("collection_status")} :</span>
                   <span
-                    className={`ml-2 px-2 py-1 rounded text-xs ${
-                      collection.status === "validated"
+                    className={`ml-2 px-2 py-1 rounded text-xs ${collection.status === "validated"
                         ? "bg-green-100 text-green-800"
                         : collection.status === "submitted"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
                   >
                     {collection.status}
                   </span>
@@ -1807,17 +1806,15 @@ const CollectionDetails = () => {
                 <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">{t("loading_cost")} :</span>{" "}
                   {(collection as any).loading_cost
-                    ? `${(collection as any).loading_cost} ${
-                        collection.currency?.symbol
-                      }`
+                    ? `${(collection as any).loading_cost} ${collection.currency?.symbol
+                    }`
                     : t("not_specified")}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">{t("unloading_cost")} :</span>{" "}
                   {(collection as any).unloading_cost
-                    ? `${(collection as any).unloading_cost} ${
-                        collection.currency?.symbol
-                      }`
+                    ? `${(collection as any).unloading_cost} ${collection.currency?.symbol
+                    }`
                     : t("not_specified")}
                 </p>
                 <p className="text-gray-800 dark:text-gray-400">
@@ -1978,7 +1975,7 @@ const CollectionDetails = () => {
                     {t("control_posts_count")} :
                   </span>{" "}
                   {collection.control_posts_count !== null &&
-                  collection.control_posts_count !== undefined
+                    collection.control_posts_count !== undefined
                     ? collection.control_posts_count
                     : t("not_specified")}
                   {/* Debug: {JSON.stringify(collection.control_posts_count)} */}
@@ -2115,11 +2112,11 @@ const CollectionDetails = () => {
                 <p className="text-gray-800 dark:text-gray-400">
                   <span className="font-bold">{t("control_locations")} :</span>{" "}
                   {collection.collectionControls &&
-                  collection.collectionControls.length > 0
+                    collection.collectionControls.length > 0
                     ? collection.collectionControls
-                        .map((control) => control.location)
-                        .filter((loc) => loc && loc.trim())
-                        .join(", ") || t("none")
+                      .map((control) => control.location)
+                      .filter((loc) => loc && loc.trim())
+                      .join(", ") || t("none")
                     : t("none")}
                 </p>
                 {/* <p className="text-gray-800 dark:text-gray-400">
@@ -2171,9 +2168,8 @@ const CollectionDetails = () => {
         </ComponentCard>
 
         <ComponentCard
-          title={`${t("collection_items")} (${
-            collection.collectionItems?.length || 0
-          })`}
+          title={`${t("collection_items")} (${collection.collectionItems?.length || 0
+            })`}
         >
           <div className="space-y-4">
             {collection.collectionItems?.map((item, index) => (
@@ -2209,10 +2205,25 @@ const CollectionDetails = () => {
                       <span className="font-bold">{t("unit")} :</span>{" "}
                       {item.unity?.name || t("not_specified")}
                     </p>
-                    <p className="text-gray-800 dark:text-gray-400">
-                      <span className="font-bold">{t("unit_price")} :</span>{" "}
-                      {item.unit_price} FCFA
-                    </p>
+                    {/* <div className="text-gray-800 dark:text-gray-400">
+
+
+
+                      {item.animal_categories && item.animal_categories.map((a, index) => (
+                        <div key={index} className="text-gray-800 dark:text-gray-400">
+                          <p>
+                            <span className="font-bold">Catégorie :</span> {a.category}
+                          </p>
+                          <p>
+                            <span className="font-bold">Quantité :</span> {a.qty}
+                          </p>
+                          <p>
+                            <span className="font-bold">Prix total :</span> {a.price} FCFA
+                          </p>
+                        </div>
+                      ))}
+
+                    </div> */}
                     <p className="text-gray-800 dark:text-gray-400">
                       <span className="font-bold">{t("total_value")} :</span>{" "}
                       {item.total_value} FCFA
@@ -2415,9 +2426,8 @@ const CollectionDetails = () => {
         </ComponentCard>
 
         <ComponentCard
-          title={`${t("collection_controls")} (${
-            collection.collectionControls?.length || 0
-          })`}
+          title={`${t("collection_controls")} (${collection.collectionControls?.length || 0
+            })`}
         >
           <div className="space-y-3">
             {collection.collectionControls?.map((control, index) => (
@@ -2584,9 +2594,8 @@ const CollectionDetails = () => {
         </ComponentCard>
 
         <ComponentCard
-          title={`${t("validations")} (${
-            workflow?.validation_history?.length || 0
-          })`}
+          title={`${t("validations")} (${workflow?.validation_history?.length || 0
+            })`}
         >
           <div className="space-y-3">
             {workflow?.validation_history?.map((validation, index) => (
@@ -2611,13 +2620,12 @@ const CollectionDetails = () => {
                         {t("validation_result")} :
                       </span>
                       <span
-                        className={`ml-1 px-2 py-1 rounded text-xs ${
-                          validation.validation_result === "approved"
+                        className={`ml-1 px-2 py-1 rounded text-xs ${validation.validation_result === "approved"
                             ? "bg-green-100 text-green-800"
                             : validation.validation_result === "rejected"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {validation.validation_result}
                       </span>
