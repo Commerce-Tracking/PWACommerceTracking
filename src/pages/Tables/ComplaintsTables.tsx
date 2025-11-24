@@ -45,7 +45,7 @@ export default function ComplaintsTables() {
     return (
         <>
             <PageMeta
-                title="OFR | Admin"
+                title="CT | Admin"
                 description="Opération Fluidité Routière Agro-bétail"
             />
             <PageBreadcrumb pageTitle={t('obstacles')} />

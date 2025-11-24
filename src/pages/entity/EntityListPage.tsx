@@ -17,7 +17,7 @@ const  EntityListPage = () => {
   return (
     <>
       <PageMeta
-        title="OFR | Liste des entités"
+        title="CT | Liste des entités"
         description="Consulter la liste des entités pour Opération Fluidité Routière Agro-bétail"
       />
       <PageBreadcrumb pageTitle={t('entity_list')} />

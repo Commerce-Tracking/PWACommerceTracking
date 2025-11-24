@@ -56,7 +56,7 @@
   "agent_details": "Agent Details",
   "agent_collections": "Agent Collections",
   "livestock_collections": "Livestock Collections",
-  "agricultural_collections": "Agricultural Collections",
+  "agricultural_collections": "Vegetable and fishery collections",
   "validated_collections_by_team_managers": "Collections Validated by Team Managers",
   "collection_details": "Collection Details",
   "collector": "Collector",
@@ -338,7 +338,7 @@
   "animal_head_unit": "head(s)",
   "animal_price_at": "at",
 
-  "dashboard_title": "OFR | Admin",
+  "dashboard_title": "CT | Admin",
   "dashboard_description": "Road Fluidity Operation Livestock",
   "dashboard_subtitle": "Overview of your activities and statistics",
 

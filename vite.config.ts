@@ -35,7 +35,7 @@ export default defineConfig(async () => {
         ],
         manifest: {
           name: "Commerce Tracking Backoffice",
-          short_name: "CT Admin",
+          short_name: "CT Chef d'équipe-Editeur ",
           description:
             "Opération Fluidité Routière - Administration des collectes agricoles et bétail",
           theme_color: "#00277F",

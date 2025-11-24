@@ -18,7 +18,7 @@ export default function UserProfiles() {
     return (
         <>
             <PageMeta
-                title="OFR | Admin"
+                title="CT | Admin"
                 description="Opération Fluidité Routière Agro-bétail"
             />
             <PageBreadcrumb pageTitle="Profil" />

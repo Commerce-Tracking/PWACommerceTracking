@@ -55,7 +55,7 @@
   "agent_details": "Détails de l'agent",
   "agent_collections": "Collectes des agents",
   "livestock_collections": "Collectes de bétail",
-  "agricultural_collections": "Collectes agricoles",
+  "agricultural_collections": "Collectes végétales et halieutiques",
   "validated_collections_by_team_managers": "Collectes validées par chefs d'équipe",
 
   "origin": "Origine",
@@ -343,7 +343,7 @@
   "animal_head_unit": "tête(s)",
   "animal_price_at": "à",
 
-  "dashboard_title": "OFR | Admin",
+  "dashboard_title": "CT | Admin",
   "dashboard_description": "Opération Fluidité Routière Agro-bétail",
   "dashboard_subtitle": "Vue d'ensemble de vos activités et statistiques",
 
