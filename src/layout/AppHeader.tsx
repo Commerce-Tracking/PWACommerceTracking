@@ -86,12 +86,12 @@ const AppHeader: React.FC = () => {
           <Link to="/" className="lg:hidden flex items-center">
             <img
               className="dark:hidden h-25 w-auto max-w-[140px] sm:max-w-[180px]"
-              src="./images/logo/Plan de travail 1.png"
+              src="/images/logo/Plan de travail 1.png"
               alt="Logo"
             />
             <img
               className="hidden dark:block h-25 w-auto max-w-[140px] sm:max-w-[180px]"
-              src="./images/logo/Plan de travail 1.svg"
+              src="/images/logo/Plan de travail 1.svg"
               alt="Logo"
             />
           </Link>

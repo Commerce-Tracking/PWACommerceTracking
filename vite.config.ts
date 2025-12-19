@@ -6,8 +6,8 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
 export default defineConfig(async () => {
-  // cherche un port libre à partir de 5173
-  const port = await getPort({ port: 5173 });
+  // cherche un port libre à partir de 5174
+  const port = await getPort({ port: 5174 });
 
   return {
     plugins: [

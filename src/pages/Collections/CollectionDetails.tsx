@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
@@ -584,6 +584,7 @@ interface WorkflowResponse {
 const CollectionDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { userInfo } = useAuth();
   const { t } = useTranslation();
 
@@ -1369,7 +1370,11 @@ const CollectionDetails = () => {
             label={t("back_to_list")}
             icon="pi pi-arrow-left"
             style={{ backgroundColor: "#00277F", borderColor: "#00277F" }}
-            onClick={() => navigate("/create-user")}
+            onClick={() => {
+              // Utiliser le chemin sauvegardé ou le chemin par défaut
+              const returnPath = location.state?.returnPath || "/create-user";
+              navigate(returnPath);
+            }}
           />
         </div>
       </div>
@@ -1397,7 +1402,15 @@ const CollectionDetails = () => {
               icon="pi pi-arrow-left"
               style={{ backgroundColor: "#00277F", borderColor: "#00277F" }}
               className="w-full sm:w-auto text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
-              onClick={() => navigate("/create-user")}
+              onClick={() => {
+                // Utiliser le chemin sauvegardé ou le chemin par défaut
+                const returnPath = location.state?.returnPath || "/create-user";
+                console.log("=== NAVIGATION RETOUR ===");
+                console.log("returnPath:", returnPath);
+                console.log("location.state:", location.state);
+                console.log("=== FIN NAVIGATION RETOUR ===");
+                navigate(returnPath);
+              }}
             />
             {(canValidate() || canSupervisorValidate()) && (
               <>
