@@ -360,6 +360,8 @@
   "processed_collections_message": "Vous avez traité {{count}} collectes, continuez votre bon travail!",
   "processed_collections": "Collectes traitées",
   "rejected_collections": "Collectes rejetées",
+  "monthly_collections": "Collectes mensuelles",
+  "monthly_collections_description": "Évolution mensuelle des collectes",
 
   "view_details": "Voir détails",
   "error": "Erreur",

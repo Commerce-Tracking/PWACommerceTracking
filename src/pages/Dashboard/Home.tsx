@@ -1,5 +1,5 @@
 import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
-// import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
+import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
 // import StatisticsChart from "../../components/ecommerce/StatisticsChart";
 import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
 // import DemographicCard from "../../components/ecommerce/DemographicCard";
@@ -45,9 +45,9 @@ export default function Home() {
           <DemographicCard />
         </div> */}
 
-        {/* <div className="col-span-12 space-y-6 xl:col-span-7">
+        <div className="col-span-12 space-y-6 xl:col-span-7">
           <MonthlySalesChart />
-        </div> */}
+        </div>
 
         {/* Statistiques */}
         {/* <div className="col-span-12">

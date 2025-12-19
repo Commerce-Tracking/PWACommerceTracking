@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Toast } from "primereact/toast";
@@ -9,7 +9,7 @@ import ComponentCard from "../../common/ComponentCard";
 import "primeicons/primeicons.css";
 import "primereact/resources/themes/lara-light-cyan/theme.css";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 
 interface Collection {
@@ -354,7 +354,86 @@ const CollectionsTableOne = () => {
   const [tableData, setTableData] = useState<Collection[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { userInfo } = useAuth();
+  const { t, i18n } = useTranslation();
+  const [, forceUpdate] = useState({});
+  
+  // Initialiser la page depuis l'URL, location.state, ou par défaut 1
+  const getInitialPage = (): number => {
+    // Priorité 1: location.state (retour depuis détails)
+    if (location.state?.returnPage) {
+      return location.state.returnPage;
+    }
+    // Priorité 2: URL
+    const pageFromUrl = searchParams.get("page");
+    if (pageFromUrl) {
+      const pageNum = parseInt(pageFromUrl, 10);
+      if (!isNaN(pageNum) && pageNum > 0) {
+        return pageNum;
+      }
+    }
+    // Par défaut: page 1
+    return 1;
+  };
+
+  const [currentPage, setCurrentPage] = useState<number>(getInitialPage);
+  // Ref pour garder la valeur actuelle de currentPage
+  const currentPageRef = useRef<number>(getInitialPage);
+  
+  // Mettre à jour la ref quand currentPage change
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
+  
+  // Synchroniser currentPage avec l'URL et location.state
+  useEffect(() => {
+    const pageFromUrl = searchParams.get("page");
+    const urlPage = pageFromUrl ? parseInt(pageFromUrl, 10) : null;
+    
+    console.log("=== SYNC PAGINATION ===");
+    console.log("pageFromUrl:", pageFromUrl);
+    console.log("urlPage:", urlPage);
+    console.log("currentPage:", currentPage);
+    console.log("location.state?.returnPage:", location.state?.returnPage);
+    
+    // Priorité 1: location.state (retour depuis détails)
+    if (location.state?.returnPage) {
+      const savedPage = location.state.returnPage;
+      console.log("Restauration depuis location.state:", savedPage);
+      if (savedPage !== currentPage) {
+        setCurrentPage(savedPage);
+      }
+      // Mettre à jour l'URL avec la page sauvegardée
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.set("page", savedPage.toString());
+      setSearchParams(newSearchParams, { replace: true });
+      console.log("=== FIN SYNC PAGINATION ===");
+      return;
+    }
+    
+    // Priorité 2: URL (seulement si on vient d'arriver sur la page)
+    // Ne pas réinitialiser si currentPage est déjà correct
+    if (urlPage && !isNaN(urlPage) && urlPage > 0 && urlPage !== currentPage) {
+      // Seulement si on vient d'arriver (pas de location.state) et que l'URL diffère
+      console.log("Restauration depuis URL:", urlPage);
+      setCurrentPage(urlPage);
+      console.log("=== FIN SYNC PAGINATION ===");
+      return;
+    }
+    
+    // Si l'URL n'a pas de page mais currentPage n'est pas 1, mettre à jour l'URL
+    if (!urlPage && currentPage !== 1) {
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.set("page", currentPage.toString());
+      setSearchParams(newSearchParams, { replace: true });
+    }
+    console.log("=== FIN SYNC PAGINATION ===");
+    // Seulement au montage ou quand location.key change (nouvelle navigation)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [totalRecords, setTotalRecords] = useState<number>(0);
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -363,10 +442,6 @@ const CollectionsTableOne = () => {
     useState<string>("");
   const [validationStatus, setValidationStatus] = useState<string>("");
   const toast = useRef<Toast>(null);
-  const navigate = useNavigate();
-  const { userInfo } = useAuth();
-  const { t, i18n } = useTranslation();
-  const [, forceUpdate] = useState({});
 
   // Fonction pour récupérer les collectes de bétail
   const fetchData = async () => {
@@ -635,12 +710,34 @@ const CollectionsTableOne = () => {
     forceUpdate({});
   }, [i18n.language]);
 
-  const handleViewDetails = (collection: Collection) => {
-    // Passer les données de la collecte via l'état de navigation
+  const handleViewDetails = useCallback((collection: Collection) => {
+    // Utiliser la ref pour obtenir la valeur actuelle de currentPage
+    const actualPage = currentPageRef.current;
+    
+    // Construire le chemin de retour avec la page actuelle dans l'URL
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set("page", actualPage.toString());
+    const returnPath = `${location.pathname}?${newSearchParams.toString()}`;
+    
+    console.log("=== NAVIGATION VERS DÉTAILS ===");
+    console.log("currentPage (state):", currentPage);
+    console.log("currentPage (ref):", actualPage);
+    console.log("returnPath:", returnPath);
+    console.log("returnPage:", actualPage);
+    console.log("=== FIN NAVIGATION VERS DÉTAILS ===");
+    
+    // Mettre à jour l'URL avant de naviguer pour qu'elle soit sauvegardée
+    setSearchParams(newSearchParams, { replace: true });
+    
+    // Passer les données de la collecte et la page actuelle via l'état de navigation
     navigate(`/collection/${collection.id}`, {
-      state: { collection },
+      state: { 
+        collection,
+        returnPage: actualPage,
+        returnPath: returnPath,
+      },
     });
-  };
+  }, [currentPage, searchParams, location.pathname, navigate, setSearchParams]);
 
   const onPageChange = (event: any) => {
     console.log("=== PAGINATION DEBUG ===");
@@ -648,7 +745,16 @@ const CollectionsTableOne = () => {
     console.log("Nouvelle page:", event.page + 1);
     console.log("Nouveau nombre de lignes:", event.rows);
 
-    setCurrentPage(event.page + 1);
+    const newPage = event.page + 1;
+    
+    // Mettre à jour l'URL AVANT de mettre à jour currentPage pour éviter les conflits
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set("page", newPage.toString());
+    setSearchParams(newSearchParams, { replace: true });
+    
+    // Mettre à jour currentPage et la ref après l'URL
+    setCurrentPage(newPage);
+    currentPageRef.current = newPage;
     setRowsPerPage(event.rows);
   };
 
