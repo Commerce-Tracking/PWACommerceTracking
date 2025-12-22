@@ -349,7 +349,7 @@ const AgriculturalCollectionsTableOne = () => {
 
   const [currentPage, setCurrentPage] = useState<number>(getInitialPage);
   // Ref pour garder la valeur actuelle de currentPage
-  const currentPageRef = useRef<number>(getInitialPage);
+  const currentPageRef = useRef<number>(getInitialPage());
   
   // Mettre à jour la ref quand currentPage change
   useEffect(() => {
