@@ -100,16 +100,16 @@ export default function PWAUpdatePrompt() {
   return (
     <>
       <Toast ref={toast} position="top-right" />
-      <div className="fixed bottom-4 right-4 z-50 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-w-sm">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-            <i className="pi pi-refresh text-blue-600 dark:text-blue-300"></i>
+      <div className="fixed bottom-4 right-4 z-50 bg-white dark:bg-gray-900 p-5 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 max-w-sm font-dm-sans">
+        <div className="flex items-start gap-4 mb-4">
+          <div className="w-12 h-12 bg-info-50 dark:bg-info-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <i className="pi pi-refresh text-info-500 dark:text-info-400 text-lg"></i>
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+          <div className="flex-1">
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1">
               {t("pwa_update_available")}
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               {t("pwa_update_message")}
             </p>
           </div>
@@ -118,13 +118,24 @@ export default function PWAUpdatePrompt() {
           <Button
             label={t("pwa_update_now")}
             icon="pi pi-check"
-            className="p-button-sm p-button-primary"
+            className="!bg-brand-500 hover:!bg-brand-600 !border-brand-500 hover:!border-brand-600 !text-white flex-1 text-sm px-3 py-2"
+            style={{
+              backgroundColor: "#1A6C30",
+              borderColor: "#1A6C30",
+              color: "white",
+              fontSize: "0.875rem",
+              padding: "0.5rem 0.75rem",
+            }}
             onClick={handleUpdate}
           />
           <Button
             label={t("cancel")}
             icon="pi pi-times"
-            className="p-button-sm p-button-secondary"
+            className="!bg-gray-100 hover:!bg-gray-200 dark:!bg-gray-800 dark:hover:!bg-gray-700 !text-gray-700 dark:!text-gray-300 !border-gray-200 dark:!border-gray-700 text-sm px-3 py-2"
+            style={{
+              fontSize: "0.875rem",
+              padding: "0.5rem 0.75rem",
+            }}
             onClick={() => setDismissed(true)}
           />
         </div>
