@@ -350,56 +350,54 @@ const AgriculturalCollectionsTableOne = () => {
   const [currentPage, setCurrentPage] = useState<number>(getInitialPage);
   // Ref pour garder la valeur actuelle de currentPage
   const currentPageRef = useRef<number>(getInitialPage());
+  // Flag pour indiquer si la restauration initiale est terminée
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
   
   // Mettre à jour la ref quand currentPage change
   useEffect(() => {
     currentPageRef.current = currentPage;
   }, [currentPage]);
   
-  // Synchroniser currentPage avec l'URL et location.state seulement au montage ou retour depuis détails
+  // Synchroniser currentPage avec l'URL
   useEffect(() => {
     const pageFromUrl = searchParams.get("page");
-    const urlPage = pageFromUrl ? parseInt(pageFromUrl, 10) : null;
+    const urlPage = pageFromUrl ? parseInt(pageFromUrl, 10) : 1;
     
     console.log("=== SYNC PAGINATION (AGRICULTURAL) ===");
     console.log("pageFromUrl:", pageFromUrl);
     console.log("urlPage:", urlPage);
     console.log("currentPage:", currentPage);
-    console.log("location.state?.returnPage:", location.state?.returnPage);
     
-    // Priorité 1: location.state (retour depuis détails)
-    if (location.state?.returnPage) {
-      const savedPage = location.state.returnPage;
-      console.log("Restauration depuis location.state:", savedPage);
-      setCurrentPage(savedPage);
-      // Mettre à jour l'URL avec la page sauvegardée
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.set("page", savedPage.toString());
-      setSearchParams(newSearchParams, { replace: true });
-      console.log("=== FIN SYNC PAGINATION (AGRICULTURAL) ===");
-      return;
-    }
-    
-    // Priorité 2: URL (seulement si on vient d'arriver sur la page)
-    // Ne pas réinitialiser si currentPage est déjà correct
-    if (urlPage && !isNaN(urlPage) && urlPage > 0 && urlPage !== currentPage) {
-      // Seulement si on vient d'arriver (pas de location.state) et que l'URL diffère
-      console.log("Restauration depuis URL:", urlPage);
+    // Toujours synchroniser avec l'URL
+    if (urlPage !== currentPage) {
+      console.log("Restauration page depuis URL:", urlPage);
       setCurrentPage(urlPage);
-      console.log("=== FIN SYNC PAGINATION (AGRICULTURAL) ===");
-      return;
+      currentPageRef.current = urlPage;
     }
     
-    // Si l'URL n'a pas de page mais currentPage n'est pas 1, mettre à jour l'URL
-    if (!urlPage && currentPage !== 1) {
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.set("page", currentPage.toString());
-      setSearchParams(newSearchParams, { replace: true });
-    }
+    setIsInitialized(true);
     console.log("=== FIN SYNC PAGINATION (AGRICULTURAL) ===");
-    // Seulement au montage ou quand location.key change (nouvelle navigation)
+    // Se déclencher au montage et quand searchParams change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.key]);
+  }, [searchParams.toString()]);
+  
+  // Synchroniser validationStatus avec l'URL
+  useEffect(() => {
+    const statusFromUrl = searchParams.get("status") || "";
+    
+    console.log("=== SYNC VALIDATION STATUS (AGRICULTURAL) ===");
+    console.log("statusFromUrl:", statusFromUrl);
+    console.log("validationStatus actuel:", validationStatus);
+    
+    // Toujours synchroniser avec l'URL
+    if (statusFromUrl !== validationStatus) {
+      console.log("Restauration statut depuis URL:", statusFromUrl, "actuel:", validationStatus);
+      setValidationStatus(statusFromUrl);
+    }
+    console.log("=== FIN SYNC VALIDATION STATUS (AGRICULTURAL) ===");
+    // Se déclencher au montage et quand searchParams change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
   
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [totalRecords, setTotalRecords] = useState<number>(0);
@@ -407,7 +405,13 @@ const AgriculturalCollectionsTableOne = () => {
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [selectedRejectionReason, setSelectedRejectionReason] =
     useState<string>("");
-  const [validationStatus, setValidationStatus] = useState<string>("");
+  // Initialiser validationStatus depuis l'URL
+  const getInitialValidationStatus = (): string => {
+    const statusFromUrl = searchParams.get("status");
+    return statusFromUrl || "";
+  };
+
+  const [validationStatus, setValidationStatus] = useState<string>(getInitialValidationStatus);
   const toast = useRef<Toast>(null);
 
   // Fonction pour récupérer les collectes agricoles
@@ -662,15 +666,21 @@ const AgriculturalCollectionsTableOne = () => {
   };
 
   useEffect(() => {
-    console.log("=== USEEFFECT TRIGGERED ===");
+    // Ne pas appeler fetchData avant que la restauration initiale soit terminée
+    if (!isInitialized) {
+      console.log("=== USEEFFECT ATTENTE INITIALISATION (AGRICULTURAL) ===");
+      return;
+    }
+    
+    console.log("=== USEEFFECT TRIGGERED (AGRICULTURAL) ===");
     console.log("currentPage:", currentPage);
     console.log("rowsPerPage:", rowsPerPage);
     console.log("globalFilter:", globalFilter);
     console.log("validationStatus:", validationStatus);
-    console.log("=== FIN USEEFFECT DEBUG ===");
+    console.log("=== FIN USEEFFECT DEBUG (AGRICULTURAL) ===");
 
     fetchData();
-  }, [currentPage, rowsPerPage, globalFilter, validationStatus]);
+  }, [currentPage, rowsPerPage, globalFilter, validationStatus, isInitialized]);
 
   // Force le re-rendu quand la langue change
   useEffect(() => {
@@ -681,14 +691,29 @@ const AgriculturalCollectionsTableOne = () => {
     // Utiliser la ref pour obtenir la valeur actuelle de currentPage
     const actualPage = currentPageRef.current;
     
-    // Construire le chemin de retour avec la page actuelle dans l'URL
-    const newSearchParams = new URLSearchParams(searchParams);
+    // Lire le statut depuis l'URL actuelle (window.location pour être sûr d'avoir la vraie URL)
+    const currentUrl = new URL(window.location.href);
+    const statusFromUrl = currentUrl.searchParams.get("status") || "";
+    // Aussi depuis searchParams au cas où
+    const statusFromSearchParams = searchParams.get("status") || "";
+    // Utiliser celui qui n'est pas vide, ou validationStatus en dernier recours
+    const finalStatus = statusFromUrl || statusFromSearchParams || validationStatus;
+    
+    // Construire le chemin de retour avec la page actuelle et le statut dans l'URL
+    const newSearchParams = new URLSearchParams();
     newSearchParams.set("page", actualPage.toString());
+    if (finalStatus) {
+      newSearchParams.set("status", finalStatus);
+    }
     const returnPath = `${location.pathname}?${newSearchParams.toString()}`;
     
     console.log("=== NAVIGATION VERS DÉTAILS (AGRICULTURAL) ===");
     console.log("currentPage (state):", currentPage);
     console.log("currentPage (ref):", actualPage);
+    console.log("validationStatus (state):", validationStatus);
+    console.log("statusFromUrl (window.location):", statusFromUrl);
+    console.log("statusFromSearchParams:", statusFromSearchParams);
+    console.log("finalStatus:", finalStatus);
     console.log("returnPath:", returnPath);
     console.log("returnPage:", actualPage);
     console.log("=== FIN NAVIGATION VERS DÉTAILS (AGRICULTURAL) ===");
@@ -696,15 +721,16 @@ const AgriculturalCollectionsTableOne = () => {
     // Mettre à jour l'URL avant de naviguer pour qu'elle soit sauvegardée
     setSearchParams(newSearchParams, { replace: true });
     
-    // Passer les données de la collecte et la page actuelle via l'état de navigation
+    // Passer les données de la collecte, la page actuelle et le statut via l'état de navigation
     navigate(`/collection/${collection.id}`, {
       state: { 
         collection,
         returnPage: actualPage,
+        returnValidationStatus: finalStatus,
         returnPath: returnPath,
       },
     });
-  }, [currentPage, searchParams, location.pathname, navigate, setSearchParams]);
+  }, [currentPage, validationStatus, searchParams, location.pathname, navigate, setSearchParams]);
 
   const onPageChange = (event: any) => {
     console.log("=== PAGINATION DEBUG ===");
@@ -847,6 +873,17 @@ const AgriculturalCollectionsTableOne = () => {
   const handleValidationStatusChange = (status: string) => {
     setValidationStatus(status);
     setCurrentPage(1); // Reset à la première page
+    
+    // Mettre à jour l'URL avec le nouveau statut
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (status) {
+      newSearchParams.set("status", status);
+    } else {
+      newSearchParams.delete("status");
+    }
+    // Réinitialiser la page à 1 dans l'URL aussi
+    newSearchParams.set("page", "1");
+    setSearchParams(newSearchParams, { replace: true });
   };
 
   const statusBodyTemplate = (rowData: Collection) => {
@@ -1080,6 +1117,7 @@ const AgriculturalCollectionsTableOne = () => {
                 value={validationStatus}
                 onChange={(e) => handleValidationStatusChange(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                key={`validation-status-${validationStatus}`}
               >
                 <option value="">Tous les statuts</option>
                 {userInfo?.role_id === 4 ? (
