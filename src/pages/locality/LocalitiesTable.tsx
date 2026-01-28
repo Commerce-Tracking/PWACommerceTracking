@@ -38,11 +38,11 @@ const LocalitiesTable = () => {
   const toast = useRef<Toast>(null);
   const navigate = useNavigate();
 
-   const { t, i18n } = useTranslation();
-        
-          const changeLanguage = (lng: string) => {
-            i18n.changeLanguage(lng);
-          };
+  const { t, i18n } = useTranslation();
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
 
   const truncateText = (text: string, maxLength: number) => {
     return text && text.length > maxLength ? text.substring(0, maxLength) + '...' : text || 'Sans nom';
@@ -84,7 +84,7 @@ const LocalitiesTable = () => {
       setCountries(countriesData);
       setTotalRecords(localitiesResponse.data?.data?.total || 0);
     } catch (err: any) {
-      console.error('Erreur API :', err);
+
       const errorMessage = err.response?.data?.message || 'Erreur lors du chargement';
       toast.current?.show({
         severity: 'error',
@@ -146,7 +146,7 @@ const LocalitiesTable = () => {
       setEditLocality(null);
       fetchData();
     } catch (err: any) {
-      console.error('Erreur API :', err);
+
       const errorMessage = err.response?.data?.message || 'Erreur de modification.';
       setEditError(errorMessage);
       toast.current?.show({
@@ -192,49 +192,49 @@ const LocalitiesTable = () => {
         <h1 className="page-title">Gestion des Localités</h1>
         <p className="page-subtitle">Liste et gestion des localités par pays</p>
       </div>
-      
+
       <div className="content-card">
         <div className="content-card-header">
           <h2 className="content-card-title">{t('locality_list')}</h2>
         </div>
         <div className="content-card-body">
-        <DataTable
-          value={localities}
-          loading={loading}
-          paginator
-          rows={rowsPerPage}
-          first={(currentPage - 1) * rowsPerPage}
-          totalRecords={totalRecords}
-          onPage={onPageChange}
-          filterDisplay="row"
-          globalFilterFields={['name']}
-          emptyMessage="Aucune localité trouvée."
-          rowsPerPageOptions={[5, 10, 25]}
-          tableStyle={{ minWidth: '50rem' }}
-          className="p-datatable-sm"
-          responsiveLayout="scroll"
-        >
-          <Column
-            field="name"
-            header={t('name')}
-            filter
-            filterPlaceholder={t('search_locality')}
-            body={nameBodyTemplate}
-            style={{ width: '40%' }}
-          />
-          <Column
-            header={t('country')}
-            body={countryNameBodyTemplate}
-            filter
-            filterPlaceholder={t('search_country')}
-            style={{ width: '40%' }}
-          />
-          <Column
-            header={t('actions')}
-            body={actionBodyTemplate}
-            style={{ width: '20%' }}
-          />
-        </DataTable>
+          <DataTable
+            value={localities}
+            loading={loading}
+            paginator
+            rows={rowsPerPage}
+            first={(currentPage - 1) * rowsPerPage}
+            totalRecords={totalRecords}
+            onPage={onPageChange}
+            filterDisplay="row"
+            globalFilterFields={['name']}
+            emptyMessage="Aucune localité trouvée."
+            rowsPerPageOptions={[5, 10, 25]}
+            tableStyle={{ minWidth: '50rem' }}
+            className="p-datatable-sm"
+            responsiveLayout="scroll"
+          >
+            <Column
+              field="name"
+              header={t('name')}
+              filter
+              filterPlaceholder={t('search_locality')}
+              body={nameBodyTemplate}
+              style={{ width: '40%' }}
+            />
+            <Column
+              header={t('country')}
+              body={countryNameBodyTemplate}
+              filter
+              filterPlaceholder={t('search_country')}
+              style={{ width: '40%' }}
+            />
+            <Column
+              header={t('actions')}
+              body={actionBodyTemplate}
+              style={{ width: '20%' }}
+            />
+          </DataTable>
         </div>
       </div>
 
@@ -248,7 +248,7 @@ const LocalitiesTable = () => {
         <form onSubmit={handleUpdate} className="p-4 space-y-4">
           <div className="p-field">
             <label htmlFor="editName" className="block mb-2 font-bold">
-            {t('lacality_name')}
+              {t('lacality_name')}
             </label>
             <InputText
               id="editName"
@@ -261,7 +261,7 @@ const LocalitiesTable = () => {
           </div>
           <div className="p-field">
             <label htmlFor="editCountry" className="block mb-2 font-bold">
-      {t('country')}
+              {t('country')}
             </label>
             <Dropdown
               id="editCountry"

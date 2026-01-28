@@ -22,14 +22,14 @@ const AddEntity = () => {
 
 
     const { t, i18n } = useTranslation();
-  
+
     const changeLanguage = (lng: string) => {
-      i18n.changeLanguage(lng);
+        i18n.changeLanguage(lng);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Soumission du formulaire avec name :', name);
+
 
         if (!name.trim()) {
             setError('Le nom de l\'entité est requis.');
@@ -69,7 +69,7 @@ const AddEntity = () => {
                 }
             );
 
-            console.log('Réponse API :', response.data);
+
             toast.current?.show({
                 severity: 'success',
                 summary: 'Succès',
@@ -78,7 +78,7 @@ const AddEntity = () => {
             });
             setName('');
         } catch (err: any) {
-            console.error('Erreur API :', err);
+
             let errorMessage = 'Erreur lors de l\'ajout de l\'entité.';
             if (err.response?.status === 401 || err.response?.status === 403) {
                 errorMessage = 'Token invalide ou non autorisé. Veuillez vous reconnecter.';
@@ -116,7 +116,7 @@ const AddEntity = () => {
                     <form onSubmit={handleSubmit} className="p-4">
                         <div className="p-field mb-4">
                             <label htmlFor="name" className="block mb-2 font-bold">
-                           {t('entity_name')}
+                                {t('entity_name')}
                             </label>
                             <Input
                                 id="name"
@@ -155,7 +155,7 @@ const AddEntity = () => {
                                     ></path>
                                 </svg>
                             )}
-                         {t('add')}
+                            {t('add')}
                         </button>
                     </form>
                     <Toast ref={toast} position="bottom-right" />

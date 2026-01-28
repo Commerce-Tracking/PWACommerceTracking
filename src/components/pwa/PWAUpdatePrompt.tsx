@@ -25,10 +25,9 @@ export function usePWAUpdate() {
     const updateServiceWorker = registerSW({
       immediate: false, // Ne pas vérifier immédiatement au chargement
       onRegistered(r) {
-        console.log("SW Registered: " + r);
+
       },
       onRegisterError(error) {
-        console.error("SW registration error", error);
       },
       onNeedRefresh() {
         // Ne déclencher que si ce n'est pas déjà affiché

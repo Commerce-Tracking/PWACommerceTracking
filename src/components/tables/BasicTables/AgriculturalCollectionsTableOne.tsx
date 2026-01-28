@@ -328,7 +328,7 @@ const AgriculturalCollectionsTableOne = () => {
   const { userInfo } = useAuth();
   const { t, i18n } = useTranslation();
   const [, forceUpdate] = useState({});
-  
+
   // Initialiser la page depuis l'URL, location.state, ou par défaut 1
   const getInitialPage = (): number => {
     // Priorité 1: location.state (retour depuis détails)
@@ -352,53 +352,48 @@ const AgriculturalCollectionsTableOne = () => {
   const currentPageRef = useRef<number>(getInitialPage());
   // Flag pour indiquer si la restauration initiale est terminée
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
-  
+
   // Mettre à jour la ref quand currentPage change
   useEffect(() => {
     currentPageRef.current = currentPage;
   }, [currentPage]);
-  
+
   // Synchroniser currentPage avec l'URL
   useEffect(() => {
     const pageFromUrl = searchParams.get("page");
     const urlPage = pageFromUrl ? parseInt(pageFromUrl, 10) : 1;
-    
-    console.log("=== SYNC PAGINATION (AGRICULTURAL) ===");
-    console.log("pageFromUrl:", pageFromUrl);
-    console.log("urlPage:", urlPage);
-    console.log("currentPage:", currentPage);
-    
+
+
+
     // Toujours synchroniser avec l'URL
     if (urlPage !== currentPage) {
-      console.log("Restauration page depuis URL:", urlPage);
+
       setCurrentPage(urlPage);
       currentPageRef.current = urlPage;
     }
-    
+
     setIsInitialized(true);
-    console.log("=== FIN SYNC PAGINATION (AGRICULTURAL) ===");
+
     // Se déclencher au montage et quand searchParams change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
-  
+
   // Synchroniser validationStatus avec l'URL
   useEffect(() => {
     const statusFromUrl = searchParams.get("status") || "";
-    
-    console.log("=== SYNC VALIDATION STATUS (AGRICULTURAL) ===");
-    console.log("statusFromUrl:", statusFromUrl);
-    console.log("validationStatus actuel:", validationStatus);
-    
+
+
+
     // Toujours synchroniser avec l'URL
     if (statusFromUrl !== validationStatus) {
-      console.log("Restauration statut depuis URL:", statusFromUrl, "actuel:", validationStatus);
+
       setValidationStatus(statusFromUrl);
     }
-    console.log("=== FIN SYNC VALIDATION STATUS (AGRICULTURAL) ===");
+
     // Se déclencher au montage et quand searchParams change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
-  
+
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [totalRecords, setTotalRecords] = useState<number>(0);
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -418,7 +413,7 @@ const AgriculturalCollectionsTableOne = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      console.log("Récupération des collectes agricoles...");
+
 
       let response;
 
@@ -497,11 +492,7 @@ const AgriculturalCollectionsTableOne = () => {
           collections.map(async (collection, index) => {
             // Vérifier si la collection est valide avant de continuer
             if (!collection || !collection.id) {
-              console.warn(
-                "Collection invalide trouvée à l'index",
-                index,
-                collection
-              );
+
               return null;
             }
 
@@ -521,7 +512,7 @@ const AgriculturalCollectionsTableOne = () => {
                   (validation: any) => validation.is_current_validation === 1
                 ) ||
                 (collection as any).collectionValidations[
-                  (collection as any).collectionValidations.length - 1
+                (collection as any).collectionValidations.length - 1
                 ];
 
               // Déterminer si c'est une validation de chef d'équipe ou superviseur
@@ -581,10 +572,7 @@ const AgriculturalCollectionsTableOne = () => {
                 };
               }
             } catch (error) {
-              console.error(
-                `Erreur pour la collection ${collection.id}:`,
-                error
-              );
+
             }
 
             // Utiliser les données de collectionValidations directement
@@ -641,22 +629,19 @@ const AgriculturalCollectionsTableOne = () => {
           total_items: item.collectionItems ? item.collectionItems.length : 0,
           total_value: item.collectionItems
             ? item.collectionItems
-                .reduce(
-                  (sum: number, item) =>
-                    sum + parseFloat(item.total_value || "0"),
-                  0
-                )
-                .toFixed(2)
+              .reduce(
+                (sum: number, item) =>
+                  sum + parseFloat(item.total_value || "0"),
+                0
+              )
+              .toFixed(2)
             : "0.00",
         }));
 
         setTableData(transformedData);
       }
     } catch (err: any) {
-      console.error(
-        "Erreur lors de la récupération des collectes agricoles:",
-        err
-      );
+
       setError(
         err.message || "Erreur lors de la récupération des collectes agricoles"
       );
@@ -668,16 +653,11 @@ const AgriculturalCollectionsTableOne = () => {
   useEffect(() => {
     // Ne pas appeler fetchData avant que la restauration initiale soit terminée
     if (!isInitialized) {
-      console.log("=== USEEFFECT ATTENTE INITIALISATION (AGRICULTURAL) ===");
+
       return;
     }
-    
-    console.log("=== USEEFFECT TRIGGERED (AGRICULTURAL) ===");
-    console.log("currentPage:", currentPage);
-    console.log("rowsPerPage:", rowsPerPage);
-    console.log("globalFilter:", globalFilter);
-    console.log("validationStatus:", validationStatus);
-    console.log("=== FIN USEEFFECT DEBUG (AGRICULTURAL) ===");
+
+
 
     fetchData();
   }, [currentPage, rowsPerPage, globalFilter, validationStatus, isInitialized]);
@@ -690,7 +670,7 @@ const AgriculturalCollectionsTableOne = () => {
   const handleViewDetails = useCallback((collection: Collection) => {
     // Utiliser la ref pour obtenir la valeur actuelle de currentPage
     const actualPage = currentPageRef.current;
-    
+
     // Lire le statut depuis l'URL actuelle (window.location pour être sûr d'avoir la vraie URL)
     const currentUrl = new URL(window.location.href);
     const statusFromUrl = currentUrl.searchParams.get("status") || "";
@@ -698,7 +678,7 @@ const AgriculturalCollectionsTableOne = () => {
     const statusFromSearchParams = searchParams.get("status") || "";
     // Utiliser celui qui n'est pas vide, ou validationStatus en dernier recours
     const finalStatus = statusFromUrl || statusFromSearchParams || validationStatus;
-    
+
     // Construire le chemin de retour avec la page actuelle et le statut dans l'URL
     const newSearchParams = new URLSearchParams();
     newSearchParams.set("page", actualPage.toString());
@@ -706,24 +686,15 @@ const AgriculturalCollectionsTableOne = () => {
       newSearchParams.set("status", finalStatus);
     }
     const returnPath = `${location.pathname}?${newSearchParams.toString()}`;
-    
-    console.log("=== NAVIGATION VERS DÉTAILS (AGRICULTURAL) ===");
-    console.log("currentPage (state):", currentPage);
-    console.log("currentPage (ref):", actualPage);
-    console.log("validationStatus (state):", validationStatus);
-    console.log("statusFromUrl (window.location):", statusFromUrl);
-    console.log("statusFromSearchParams:", statusFromSearchParams);
-    console.log("finalStatus:", finalStatus);
-    console.log("returnPath:", returnPath);
-    console.log("returnPage:", actualPage);
-    console.log("=== FIN NAVIGATION VERS DÉTAILS (AGRICULTURAL) ===");
-    
+
+
+
     // Mettre à jour l'URL avant de naviguer pour qu'elle soit sauvegardée
     setSearchParams(newSearchParams, { replace: true });
-    
+
     // Passer les données de la collecte, la page actuelle et le statut via l'état de navigation
     navigate(`/collection/${collection.id}`, {
-      state: { 
+      state: {
         collection,
         returnPage: actualPage,
         returnValidationStatus: finalStatus,
@@ -733,18 +704,15 @@ const AgriculturalCollectionsTableOne = () => {
   }, [currentPage, validationStatus, searchParams, location.pathname, navigate, setSearchParams]);
 
   const onPageChange = (event: any) => {
-    console.log("=== PAGINATION DEBUG ===");
-    console.log("Event reçu:", event);
-    console.log("Nouvelle page:", event.page + 1);
-    console.log("Nouveau nombre de lignes:", event.rows);
+
 
     const newPage = event.page + 1;
-    
+
     // Mettre à jour l'URL AVANT de mettre à jour currentPage pour éviter les conflits
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.set("page", newPage.toString());
     setSearchParams(newSearchParams, { replace: true });
-    
+
     // Mettre à jour currentPage et la ref après l'URL
     setCurrentPage(newPage);
     currentPageRef.current = newPage;
@@ -752,8 +720,7 @@ const AgriculturalCollectionsTableOne = () => {
   };
 
   const onFilter = (event: any) => {
-    console.log("=== FILTER DEBUG ===");
-    console.log("Event de filtre:", event);
+
 
     if (event.globalFilter !== undefined) {
       setGlobalFilter(event.globalFilter);
@@ -873,7 +840,7 @@ const AgriculturalCollectionsTableOne = () => {
   const handleValidationStatusChange = (status: string) => {
     setValidationStatus(status);
     setCurrentPage(1); // Reset à la première page
-    
+
     // Mettre à jour l'URL avec le nouveau statut
     const newSearchParams = new URLSearchParams(searchParams);
     if (status) {
@@ -889,19 +856,7 @@ const AgriculturalCollectionsTableOne = () => {
   const statusBodyTemplate = (rowData: Collection) => {
     if (userInfo?.role_id === 4) {
       // Chef d'équipe
-      console.log("Chef d'équipe - Données de la collection:", {
-        id: rowData.id,
-        status: rowData.status,
-        validated_by_team_manager: (rowData as any).validated_by_team_manager,
-        validation_result: (rowData as any).validation_result,
-        validation_action: (rowData as any).validation_action,
-        team_manager_validation_result: (rowData as any)
-          .team_manager_validation_result,
-        team_manager_validation_date: (rowData as any)
-          .team_manager_validation_date,
-        team_manager_rejection_reason: (rowData as any)
-          .team_manager_rejection_reason,
-      });
+
 
       if (rowData.status === "rejected") {
         return (
@@ -910,8 +865,8 @@ const AgriculturalCollectionsTableOne = () => {
               Rejetée le{" "}
               {(rowData as any).team_manager_validation_date
                 ? new Date(
-                    (rowData as any).team_manager_validation_date
-                  ).toLocaleDateString("fr-FR")
+                  (rowData as any).team_manager_validation_date
+                ).toLocaleDateString("fr-FR")
                 : ""}
             </span>
             {(rowData as any).team_manager_rejection_reason && (
@@ -936,8 +891,8 @@ const AgriculturalCollectionsTableOne = () => {
               Validée le{" "}
               {(rowData as any).team_manager_validation_date
                 ? new Date(
-                    (rowData as any).team_manager_validation_date
-                  ).toLocaleDateString("fr-FR")
+                  (rowData as any).team_manager_validation_date
+                ).toLocaleDateString("fr-FR")
                 : ""}
             </span>
           </div>
@@ -968,8 +923,8 @@ const AgriculturalCollectionsTableOne = () => {
                 Validée le{" "}
                 {rowData.supervisor_validation_date
                   ? new Date(
-                      rowData.supervisor_validation_date
-                    ).toLocaleDateString("fr-FR")
+                    rowData.supervisor_validation_date
+                  ).toLocaleDateString("fr-FR")
                   : ""}
               </span>
             </div>
@@ -981,8 +936,8 @@ const AgriculturalCollectionsTableOne = () => {
                 Rejetée le{" "}
                 {rowData.supervisor_validation_date
                   ? new Date(
-                      rowData.supervisor_validation_date
-                    ).toLocaleDateString("fr-FR")
+                    rowData.supervisor_validation_date
+                  ).toLocaleDateString("fr-FR")
                   : ""}
               </span>
               {rowData.supervisor_rejection_reason && (
@@ -1018,11 +973,11 @@ const AgriculturalCollectionsTableOne = () => {
               Validée par chef d'équipe le{" "}
               {rowData.team_manager_validation_date
                 ? new Date(
-                    rowData.team_manager_validation_date
-                  ).toLocaleDateString("fr-FR")
+                  rowData.team_manager_validation_date
+                ).toLocaleDateString("fr-FR")
                 : rowData.validated_at
-                ? new Date(rowData.validated_at).toLocaleDateString("fr-FR")
-                : "N/A"}
+                  ? new Date(rowData.validated_at).toLocaleDateString("fr-FR")
+                  : "N/A"}
             </div>
           </div>
         );
@@ -1037,11 +992,11 @@ const AgriculturalCollectionsTableOne = () => {
               Validée par chef d'équipe le{" "}
               {rowData.team_manager_validation_date
                 ? new Date(
-                    rowData.team_manager_validation_date
-                  ).toLocaleDateString("fr-FR")
+                  rowData.team_manager_validation_date
+                ).toLocaleDateString("fr-FR")
                 : rowData.validated_at
-                ? new Date(rowData.validated_at).toLocaleDateString("fr-FR")
-                : "N/A"}
+                  ? new Date(rowData.validated_at).toLocaleDateString("fr-FR")
+                  : "N/A"}
             </div>
           </div>
         );
@@ -1094,14 +1049,7 @@ const AgriculturalCollectionsTableOne = () => {
     );
   }
 
-  // Debug pour les données
-  console.log("=== RENDER DEBUG ===");
-  console.log("tableData.length:", tableData.length);
-  console.log("totalRecords:", totalRecords);
-  console.log("currentPage:", currentPage);
-  console.log("rowsPerPage:", rowsPerPage);
-  console.log("first:", (currentPage - 1) * rowsPerPage);
-  console.log("=== FIN RENDER DEBUG ===");
+
 
   return (
     <div className="p-4">

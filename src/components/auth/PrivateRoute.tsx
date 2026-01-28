@@ -6,8 +6,7 @@ export default function PrivateRoute() {
   const { userInfo, userData, accessToken, refreshToken, isLoading } =
     useAuth();
 
-  // console.log('user:', userInfo);
-  console.log("userData:", userData);
+
   // console.log('isLoading:', isLoading);
 
   if (isLoading) {
@@ -15,14 +14,14 @@ export default function PrivateRoute() {
   }
 
   if (!userInfo) {
-    console.log("Not logged in");
+
     return <Navigate to="/signin" replace />;
   }
 
   // Vérifier le rôle de l'utilisateur
   const roleId = userInfo.role_id;
   if (roleId !== 4 && roleId !== 5) {
-    console.log("Accès refusé : rôle non autorisé", roleId);
+
     return <Navigate to="/signin" replace />;
   }
 

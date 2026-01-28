@@ -1,7 +1,7 @@
-import {useCallback, useEffect, useState} from "react";
-import {PaginatedReport} from "../../context/report/report.types.ts.tsx";
+import { useCallback, useEffect, useState } from "react";
+import { PaginatedReport } from "../../context/report/report.types.ts.tsx";
 import useAuth from "../auth/useAuth.ts";
-import {useNavigate} from "react-router";
+import { useNavigate } from "react-router";
 import axiosInstance from "../../api/axios.ts";
 import { ReportsContext } from "../../context/ReportContext.tsx";
 
@@ -49,7 +49,7 @@ export const ReportsProvider: React.FC<{ children: React.ReactNode }> = ({ child
             setTotalPages(data.totalPages || 1);
             setCurrentPage(page);
         } catch (err: any) {
-            console.error("Erreur lors du chargement des rapports :", err);
+
             setError(err.response?.data?.message || "Erreur lors du chargement des rapports");
             if (err.response?.status === 401) {
                 navigate("/login"); // Redirection si non connecté

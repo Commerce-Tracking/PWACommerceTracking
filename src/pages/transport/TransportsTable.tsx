@@ -136,18 +136,15 @@ const TransportsTable = () => {
         params: { page, limit },
       });
 
-      console.log("Réponse API GET /transport :", response.data);
+
       const transportsData = Array.isArray(response.data.data.data)
         ? response.data.data.data
         : [];
-      console.log("Transports extraits :", transportsData);
+
       setTransports(transportsData);
       setTotalRecords(response.data.data.total || 0);
-      if (transportsData.length === 0) {
-        console.warn("Aucun transport trouvé dans la réponse API.");
-      }
     } catch (err: any) {
-      console.error("Erreur API :", err);
+
       const errorMessage =
         err.response?.data?.message ||
         "Erreur lors de la récupération des transports.";

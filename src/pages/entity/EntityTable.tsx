@@ -34,11 +34,11 @@ const EntityTable = () => {
 
 
 
-    const { t, i18n } = useTranslation();
-  
-    const changeLanguage = (lng: string) => {
-      i18n.changeLanguage(lng);
-    };
+  const { t, i18n } = useTranslation();
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
 
   const fetchCountries = async (page: number = 1, limit: number = 10) => {
     setLoading(true);
@@ -62,7 +62,7 @@ const EntityTable = () => {
         params: { page, limit },
       });
 
-      console.log('Réponse API:', response.data);
+
 
       const countriesData = Array.isArray(response.data.data?.data)
         ? response.data.data.data
@@ -71,11 +71,9 @@ const EntityTable = () => {
       setCountries(countriesData);
       setTotalRecords(response.data.data?.total || 0);
 
-      if (countriesData.length === 0) {
-        console.warn('Aucune entité trouvé dans la réponse.');
-      }
+
     } catch (err: any) {
-      console.error('Erreur API :', err);
+
       toast.current?.show({
         severity: 'error',
         summary: 'Erreur',
@@ -152,7 +150,7 @@ const EntityTable = () => {
       setEditEntity(null);
       fetchCountries(currentPage, rowsPerPage);
     } catch (err: any) {
-      console.error('Erreur API :', err);
+
       setEditError(err.response?.data?.message || 'Erreur lors de la modification.');
       toast.current?.show({
         severity: 'error',
@@ -188,43 +186,43 @@ const EntityTable = () => {
         <h1 className="page-title">Gestion des Entités</h1>
         <p className="page-subtitle">Liste et gestion des entités de service</p>
       </div>
-      
+
       <div className="content-card">
         <div className="content-card-header">
           <h2 className="content-card-title">{t('entity_list')}</h2>
         </div>
         <div className="content-card-body">
-        <DataTable
-          value={countries}
-          loading={loading}
-          responsiveLayout="scroll"
-          showGridlines
-          rows={rowsPerPage}
-          first={(currentPage - 1) * rowsPerPage}
-          totalRecords={totalRecords}
-          onPage={onPageChange}
-          filterDisplay="row"
-          globalFilterFields={['name']}
-          emptyMessage="Aucune entité trouvé."
-          paginator
-          rowsPerPageOptions={[5, 10, 25]}
-          tableStyle={{ minWidth: '50rem' }}
-          className="p-datatable-sm"
-        >
-          <Column
-            field="name"
-            header={t('name')}
-            filter
-            filterPlaceholder={t('search_name')}
-            body={nameBodyTemplate}
-            style={{ width: '80%' }}
-          />
-          <Column
-            header={t('actions')}
-            body={actionBodyTemplate}
-            style={{ width: '20%' }}
-          />
-        </DataTable>
+          <DataTable
+            value={countries}
+            loading={loading}
+            responsiveLayout="scroll"
+            showGridlines
+            rows={rowsPerPage}
+            first={(currentPage - 1) * rowsPerPage}
+            totalRecords={totalRecords}
+            onPage={onPageChange}
+            filterDisplay="row"
+            globalFilterFields={['name']}
+            emptyMessage="Aucune entité trouvé."
+            paginator
+            rowsPerPageOptions={[5, 10, 25]}
+            tableStyle={{ minWidth: '50rem' }}
+            className="p-datatable-sm"
+          >
+            <Column
+              field="name"
+              header={t('name')}
+              filter
+              filterPlaceholder={t('search_name')}
+              body={nameBodyTemplate}
+              style={{ width: '80%' }}
+            />
+            <Column
+              header={t('actions')}
+              body={actionBodyTemplate}
+              style={{ width: '20%' }}
+            />
+          </DataTable>
         </div>
       </div>
 

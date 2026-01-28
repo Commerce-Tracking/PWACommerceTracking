@@ -29,11 +29,11 @@ const AddLocality = () => {
   const toast = useRef<Toast>(null);
   const navigate = useNavigate();
 
-   const { t, i18n } = useTranslation();
-        
-          const changeLanguage = (lng: string) => {
-            i18n.changeLanguage(lng);
-          };
+  const { t, i18n } = useTranslation();
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
 
   // Charger les pays
   const fetchCountries = async () => {
@@ -56,11 +56,11 @@ const AddLocality = () => {
         params: { page: 1, limit: 1000 }, // Charger tous les pays (ajuster selon l'API)
       });
 
-      console.log('Réponse API GET /admin/countries :', response.data);
+
       const countriesData = Array.isArray(response.data.data.data) ? response.data.data.data : [];
       setCountries(countriesData);
     } catch (err: any) {
-      console.error('Erreur API :', err);
+
       const errorMessage =
         err.response?.data?.message || 'Erreur lors de la récupération des pays.';
       toast.current?.show({
@@ -128,13 +128,13 @@ const AddLocality = () => {
         <h1 className="page-title">Ajouter une Localité</h1>
         <p className="page-subtitle">Créer une nouvelle localité dans le système</p>
       </div>
-      
+
       <div className="form-container">
         <h2 className="form-title">{t('add_locality')}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="form-group">
             <label htmlFor="name" className="form-label">
-            {t('lacality_name')}
+              {t('lacality_name')}
             </label>
             <InputText
               id="name"
@@ -157,9 +157,9 @@ const AddLocality = () => {
               options={
                 Array.isArray(countries)
                   ? countries.map((country) => ({
-                      label: country.name,
-                      value: country.id,
-                    }))
+                    label: country.name,
+                    value: country.id,
+                  }))
                   : []
               }
               onChange={handleChange}

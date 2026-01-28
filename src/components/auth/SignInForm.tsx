@@ -22,7 +22,7 @@ export default function SignInForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Tentative de connexion avec:", username);
+
     try {
       const req = await login(username, password);
 
@@ -38,7 +38,7 @@ export default function SignInForm() {
         });
       } else {
         if (req.success === false) {
-          console.log("Échec de connexion:", req.message);
+
           openModal({
             title: "Connexion échouée!",
             description:
@@ -47,12 +47,12 @@ export default function SignInForm() {
             content: "",
           });
         } else {
-          console.log("Connexion réussie !");
+
           await navigate("/");
         }
       }
     } catch (err) {
-      console.error("Erreur lors de la connexion:", err);
+
       openModal({
         title: "Alerte!",
         description: "Erreur de connexion. Veuillez réessayer.",

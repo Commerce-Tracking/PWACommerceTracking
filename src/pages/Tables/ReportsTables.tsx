@@ -78,17 +78,16 @@ const ReportsTables = () => {
         }),
       ]);
 
-      console.log("Réponse API GET /reportings :", reportingsResponse.data);
-      console.log("Réponse API GET /auth/me :", adminResponse.data);
+
 
       // Gestion flexible de la structure de la réponse
       const reportingsData = Array.isArray(reportingsResponse.data)
         ? reportingsResponse.data
         : Array.isArray(reportingsResponse.data?.results)
-        ? reportingsResponse.data.results
-        : Array.isArray(reportingsResponse.data?.data)
-        ? reportingsResponse.data.data
-        : [];
+          ? reportingsResponse.data.results
+          : Array.isArray(reportingsResponse.data?.data)
+            ? reportingsResponse.data.data
+            : [];
       setReportings(reportingsData);
       setTotalRecords(reportingsData.length);
       setAdmin({
@@ -96,7 +95,7 @@ const ReportsTables = () => {
         name: adminResponse.data?.data?.name || "Admin",
       });
     } catch (err: any) {
-      console.error("Erreur API :", err);
+
       const errorMessage =
         err.response?.data?.message ||
         "Erreur lors de la récupération des données.";

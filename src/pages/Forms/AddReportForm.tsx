@@ -60,13 +60,13 @@ const AddReportForm = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log("Réponse API GET /auth/me :", response.data);
+
         setAdmin({
           id: response.data?.data?.id || "",
           name: response.data?.data?.name || "Admin",
         });
       } catch (err: any) {
-        console.error("Erreur API GET /auth/me :", err);
+
         toast.current?.show({
           severity: "error",
           summary: "Erreur",
@@ -118,7 +118,7 @@ const AddReportForm = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("Réponse API POST /reportings :", response.data);
+
       toast.current?.show({
         severity: "success",
         summary: "Succès",
@@ -131,7 +131,7 @@ const AddReportForm = () => {
       setAttachmentUrl("");
       setAttachmentFormat("pdf");
     } catch (err: any) {
-      console.error("Erreur API :", err);
+
       const errorMessage =
         err.response?.data?.message || "Erreur lors de l’ajout du reporting.";
       setError(errorMessage);
@@ -156,12 +156,12 @@ const AddReportForm = () => {
         description="Ajouter un nouveau reporting pour Opération Fluidité Routière Agro-bétail"
       />
       <PageBreadcrumb pageTitle={t("add_reporting")} />
-      
+
       <div className="page-header">
         <h1 className="page-title">Créer un Rapport</h1>
         <p className="page-subtitle">Générer un nouveau rapport ou signalement</p>
       </div>
-      
+
       <div className="form-container">
         <h2 className="form-title">{t("reporting_form_title")}</h2>
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -207,7 +207,7 @@ const AddReportForm = () => {
           </div>
           <div className="form-group">
             <label htmlFor="attachmentUrl" className="form-label">
-             {t('attachment_url')}
+              {t('attachment_url')}
             </label>
             <Input
               id="attachmentUrl"

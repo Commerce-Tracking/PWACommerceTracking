@@ -21,14 +21,14 @@ const AddPays = () => {
     const navigate = useNavigate();
 
     const { t, i18n } = useTranslation();
-        
-          const changeLanguage = (lng: string) => {
-            i18n.changeLanguage(lng);
-          };
+
+    const changeLanguage = (lng: string) => {
+        i18n.changeLanguage(lng);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Soumission du formulaire avec name :', name);
+
 
         if (!name.trim()) {
             setError('Le nom du pays est requis.');
@@ -68,7 +68,7 @@ const AddPays = () => {
                 }
             );
 
-            console.log('Réponse API :', response.data);
+
             toast.current?.show({
                 severity: 'success',
                 summary: 'Succès',
@@ -77,7 +77,7 @@ const AddPays = () => {
             });
             setName('');
         } catch (err: any) {
-            console.error('Erreur API :', err);
+
             let errorMessage = 'Erreur lors de l\'ajout du pays.';
             if (err.response?.status === 401 || err.response?.status === 403) {
                 errorMessage = 'Token invalide ou non autorisé. Veuillez vous reconnecter.';
@@ -154,7 +154,7 @@ const AddPays = () => {
                                     ></path>
                                 </svg>
                             )}
-                          {t('add')}
+                            {t('add')}
                         </button>
                     </form>
                     <Toast ref={toast} position="bottom-right" />

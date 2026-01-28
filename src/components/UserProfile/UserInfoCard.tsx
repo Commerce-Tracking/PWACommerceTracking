@@ -11,12 +11,10 @@ export default function UserInfoCard() {
   // @ts-ignore
   const { userInfo, userData, logout } = useAuth();
 
-  // Debug pour voir les données
-  console.log("UserInfoCard - userData:", userData);
-  console.log("UserInfoCard - userInfo:", userInfo);
+
   const handleSave = () => {
     // Handle save logic here
-    console.log("Saving changes...");
+
     closeModal();
   };
 
@@ -67,8 +65,8 @@ export default function UserInfoCard() {
                 {userData == undefined
                   ? "..."
                   : userData.email == null
-                  ? "Pas d'email"
-                  : userData.email}
+                    ? "Pas d'email"
+                    : userData.email}
               </p>
             </div>
 
@@ -80,8 +78,8 @@ export default function UserInfoCard() {
                 {userData == undefined
                   ? "..."
                   : userData.phone == null
-                  ? "Pas de numero enregistré!"
-                  : userData.phone}
+                    ? "Pas de numero enregistré!"
+                    : userData.phone}
               </p>
             </div>
 
@@ -113,10 +111,10 @@ export default function UserInfoCard() {
                 {userData == undefined
                   ? "..."
                   : userData.role_id === 4
-                  ? "Chef d'équipe"
-                  : userData.role_id === 5
-                  ? "Superviseur"
-                  : `Rôle ${userData.role_id}`}
+                    ? "Chef d'équipe"
+                    : userData.role_id === 5
+                      ? "Superviseur"
+                      : `Rôle ${userData.role_id}`}
               </p>
             </div>
 
@@ -128,8 +126,8 @@ export default function UserInfoCard() {
                 {userData == undefined
                   ? "..."
                   : userData.status === "active"
-                  ? "Actif"
-                  : userData.status}
+                    ? "Actif"
+                    : userData.status}
               </p>
             </div>
 
@@ -141,8 +139,8 @@ export default function UserInfoCard() {
                 {userData == undefined
                   ? "..."
                   : userData.is_online
-                  ? "Oui"
-                  : "Non"}
+                    ? "Oui"
+                    : "Non"}
               </p>
             </div>
 
@@ -154,8 +152,8 @@ export default function UserInfoCard() {
                 {userData == undefined
                   ? "..."
                   : userData.created_at
-                  ? new Date(userData.created_at).toLocaleDateString()
-                  : "Non spécifié"}
+                    ? new Date(userData.created_at).toLocaleDateString()
+                    : "Non spécifié"}
               </p>
             </div>
 
@@ -167,8 +165,8 @@ export default function UserInfoCard() {
                 {userData == undefined
                   ? "..."
                   : userData.updated_at
-                  ? new Date(userData.updated_at).toLocaleDateString()
-                  : "Non spécifié"}
+                    ? new Date(userData.updated_at).toLocaleDateString()
+                    : "Non spécifié"}
               </p>
             </div>
           </div>

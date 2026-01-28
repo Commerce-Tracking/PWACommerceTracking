@@ -23,7 +23,7 @@ export default function AuthProvider({ children }) {
       });
       return response.status === 200;
     } catch (error) {
-      console.log("Token invalide ou expiré");
+
       return false;
     }
   }, []);
@@ -69,9 +69,9 @@ export default function AuthProvider({ children }) {
               const profileData = profileResponse.data.result;
               setUserData(profileData);
               localStorage.setItem("userData", JSON.stringify(profileData));
-              console.log("Profil chargé avec succès");
+
             } catch (error) {
-              console.error("Erreur lors du chargement du profil:", error);
+
               // Fallback sur les données stockées si disponibles
               if (storedUserData) {
                 const parsedUserData = JSON.parse(storedUserData);
@@ -79,13 +79,11 @@ export default function AuthProvider({ children }) {
               }
             }
 
-            console.log("Session restaurée avec succès");
           } else {
-            console.log("Token expiré, nettoyage de la session");
             clearSession();
           }
         } catch (e) {
-          console.error("Impossible de parser userInfo", e);
+
           clearSession();
         }
       }
@@ -105,7 +103,7 @@ export default function AuthProvider({ children }) {
       if (currentToken) {
         const isTokenValid = await checkTokenValidity(currentToken);
         if (!isTokenValid) {
-          console.log("Token expiré lors de la vérification périodique");
+
           clearSession();
         }
       }
@@ -120,10 +118,7 @@ export default function AuthProvider({ children }) {
         username: phone,
         password,
       });
-      console.log("LOGIN DATA: ");
-      console.log(res.data);
-      console.log("Success value:", res.data.success);
-      console.log("Response structure:", JSON.stringify(res.data, null, 2));
+
 
       // Vérifier si la connexion est réussie selon la nouvelle structure
       if (res.data.success === true) {
@@ -136,10 +131,8 @@ export default function AuthProvider({ children }) {
 
         // Vérifier le rôle de l'utilisateur
         const roleId = user.role_id;
-        console.log("Role ID:", roleId);
 
         if (roleId !== 4 && roleId !== 5) {
-          console.log("Accès refusé : rôle non autorisé. Role ID:", roleId);
           return {
             success: false,
             message:
@@ -166,25 +159,19 @@ export default function AuthProvider({ children }) {
           const profileData = profileResponse.data.result;
           setUserData(profileData);
           localStorage.setItem("userData", JSON.stringify(profileData));
-          console.log("Profil chargé après connexion");
+
         } catch (error) {
-          console.error(
-            "Erreur lors du chargement du profil après connexion:",
-            error
-          );
+
         }
 
-        console.log("Connexion réussie !");
-        console.log("Rôle utilisateur:", user.role?.name || `ID: ${roleId}`);
+
 
         return {
           success: true,
           result: res.data.result,
         };
       } else {
-        console.log("Connexion échouée !");
-        console.log("Raison: success !== true");
-        console.log("Message d'erreur:", res.data.message || "Aucun message");
+
 
         return {
           success: false,
@@ -194,8 +181,7 @@ export default function AuthProvider({ children }) {
         };
       }
     } catch (err: any) {
-      console.error("Login error", err.response?.data || err.message);
-      console.error("Error details:", err);
+
 
       const errorMessage =
         err.response?.data?.message ||
@@ -211,7 +197,7 @@ export default function AuthProvider({ children }) {
 
   const authMe = async (id: any) => {
     try {
-      console.log("Access Token", accessToken);
+
       const user = await axiosInstance.get(`/auth/profile`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -222,9 +208,9 @@ export default function AuthProvider({ children }) {
       setUserData(u);
       localStorage.setItem("userData", JSON.stringify(u));
 
-      console.log("Profil récupéré avec succès !");
+
     } catch (error: any) {
-      console.error("Error", error.response?.data || error.message);
+
       if (error.response?.status === 401) {
         navigate("/signin");
       }
@@ -238,15 +224,15 @@ export default function AuthProvider({ children }) {
       setUserInfo(userInfo);
       localStorage.setItem("userInfo", JSON.stringify(userInfo));
 
-      console.log("Récupérée !");
+
     } catch (err: any) {
-      console.error("Error", err.response?.data || err.message);
+
     }
   };
 
   const logout = useCallback(() => {
     clearSession();
-    console.log("Déconnexion effectuée");
+
   }, [clearSession]);
 
   const refresh = async () => {

@@ -68,18 +68,9 @@ const UsersTableOne = () => {
           limit: "10",
           search: "string",
         };
-        console.log("Tentative de connexion à l'API...");
-        console.log(
-          "URL complète:",
-          `${url}?${new URLSearchParams(params).toString()}`
-        );
-        console.log("Token d'accès:", localStorage.getItem("accessToken"));
 
         const response = await axiosInstance.get<ApiResponse>(url, { params });
-        console.log(
-          "Réponse API complète:",
-          JSON.stringify(response.data, null, 2)
-        );
+
 
         if (response.data.success) {
           // Vérifier si result existe et si result.data est un tableau
@@ -116,17 +107,12 @@ const UsersTableOne = () => {
         } else {
           setError(
             response.data.message ||
-              "Erreur lors de la récupération des agents."
+            "Erreur lors de la récupération des agents."
           );
           setTableData([]);
         }
       } catch (err: any) {
-        console.error("Erreur détaillée:", err);
-        console.error("Code d'erreur:", err.code);
-        console.error("Message d'erreur:", err.message);
-        console.error("Réponse d'erreur:", err.response?.data);
-        console.error("Statut HTTP:", err.response?.status);
-        console.error("URL envoyée:", err.response?.config?.url);
+
 
         let errorMessage =
           "Erreur lors de la récupération des agents assignés.";

@@ -618,28 +618,16 @@ const CollectionDetails = () => {
       try {
         setIsLoading(true);
 
-        // Récupérer les données de la collecte
-        console.log(`Fetching collection data for ID: ${id}`);
         const collectionResponse = await axiosInstance.get(
           `/trade-flow/digitalized-collections/${id}`
         );
-        console.log(
-          "Données de la collecte:",
-          JSON.stringify(collectionResponse.data, null, 2)
-        );
-
         if (collectionResponse.data.success) {
           let collectionData = collectionResponse.data.result;
 
           // Récupérer l'état du workflow
           try {
-            console.log(`Fetching workflow data for ID: ${id}`);
             const workflowResponse = await axiosInstance.get<WorkflowResponse>(
               `/trade-flow/collections/${id}/workflow`
-            );
-            console.log(
-              "Données du workflow:",
-              JSON.stringify(workflowResponse.data, null, 2)
             );
 
             if (workflowResponse.data.success) {
@@ -665,21 +653,7 @@ const CollectionDetails = () => {
                   workflow.supervisor_validation.validation_result ===
                   "approved" && workflow.supervisor_validation.validated_at;
 
-                console.log("=== DEBUG SUPERVISOR VALIDATION ===");
-                console.log(
-                  "supervisor_validation:",
-                  workflow.supervisor_validation
-                );
-                console.log(
-                  "validation_result:",
-                  workflow.supervisor_validation.validation_result
-                );
-                console.log(
-                  "validated_at:",
-                  workflow.supervisor_validation.validated_at
-                );
-                console.log("isSupervisorValidated:", isSupervisorValidated);
-                console.log("=== FIN DEBUG SUPERVISOR VALIDATION ===");
+
 
                 collectionData = {
                   ...collectionData,
@@ -691,15 +665,10 @@ const CollectionDetails = () => {
                 };
               }
             } else {
-              console.log("Workflow non réussi:", workflowResponse.data);
+
             }
           } catch (workflowErr: any) {
-            console.error("Erreur lors de la récupération du workflow:", {
-              message: workflowErr.message,
-              response: workflowErr.response?.data,
-              status: workflowErr.response?.status,
-              statusText: workflowErr.response?.statusText,
-            });
+
 
             // Fallback: vérifier dans collectionValidations
             const teamManagerValidation =
@@ -736,22 +705,13 @@ const CollectionDetails = () => {
             }
           }
 
-          console.log("=== DEBUG FINAL COLLECTION DATA ===");
-          console.log("collectionData:", collectionData);
-          console.log(
-            "collectionValidations:",
-            collectionData.collectionValidations
-          );
-          console.log("=== FIN DEBUG FINAL COLLECTION DATA ===");
+
 
           setCollection(collectionData);
           setIsResubmission(false); // Réinitialiser le flag de resoumission
           setIsLoading(false);
         } else {
-          console.error(
-            "Échec de la récupération des données de la collecte:",
-            collectionResponse.data
-          );
+
           setError(
             collectionResponse.data.message ||
             "Erreur lors de la récupération des données"
@@ -769,13 +729,7 @@ const CollectionDetails = () => {
           });
         }
       } catch (err: any) {
-        console.error("Erreur API:", {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          config: err.config,
-        });
+
         setError(err.message || "Erreur lors de la récupération des données");
         setIsLoading(false);
       }
@@ -799,10 +753,7 @@ const CollectionDetails = () => {
             : "Validation effectuée par l'éditeur"),
       };
 
-      console.log(
-        `Validating collection ID: ${collection.id} with data:`,
-        requestData
-      );
+
 
       // Choisir l'endpoint selon le rôle
       const endpoint =
@@ -814,23 +765,17 @@ const CollectionDetails = () => {
         endpoint,
         requestData
       );
-      console.log(
-        "Réponse de validation:",
-        JSON.stringify(response.data, null, 2)
-      );
+
 
       if (response.data.success) {
         // Vérifier si c'est une resoumission
         const isResubmissionFlag =
           (response.data.result as any)?.is_resubmission === true;
-        console.log("=== DETECTION RESOUMISSION ===");
-        console.log("is_resubmission flag:", isResubmissionFlag);
-        console.log("response.data.result:", response.data.result);
-        console.log("=== FIN DETECTION RESOUMISSION ===");
+
 
         if (isResubmissionFlag) {
           setIsResubmission(true);
-          console.log("Flag isResubmission défini à true");
+
         }
 
         toast.success(t("validation_successful"), {
@@ -839,28 +784,22 @@ const CollectionDetails = () => {
         });
 
         // Recharger les données de la collecte
-        console.log(`Reloading collection data for ID: ${collection.id}`);
+
         const collectionResponse = await axiosInstance.get(
           `/trade-flow/digitalized-collections/${collection.id}`
         );
-        console.log(
-          "Données de la collecte après validation:",
-          JSON.stringify(collectionResponse.data, null, 2)
-        );
+
 
         if (collectionResponse.data.success) {
           let updatedCollection = collectionResponse.data.result;
 
           // Recharger l'état du workflow
           try {
-            console.log(`Reloading workflow data for ID: ${collection.id}`);
+
             const workflowResponse = await axiosInstance.get<WorkflowResponse>(
               `/trade-flow/collections/${collection.id}/workflow`
             );
-            console.log(
-              "Données du workflow après validation:",
-              JSON.stringify(workflowResponse.data, null, 2)
-            );
+
 
             if (workflowResponse.data.success) {
               const workflow = workflowResponse.data.result;
@@ -896,15 +835,7 @@ const CollectionDetails = () => {
               }
             }
           } catch (workflowErr: any) {
-            console.error(
-              "Erreur lors de la récupération du workflow après validation:",
-              {
-                message: workflowErr.message,
-                response: workflowErr.response?.data,
-                status: workflowErr.response?.status,
-                statusText: workflowErr.response?.statusText,
-              }
-            );
+
           }
 
           setCollection(updatedCollection);
@@ -914,20 +845,14 @@ const CollectionDetails = () => {
         setValidationNotes("");
         setDataQualityScore(null);
       } else {
-        console.error("Échec de la validation:", response.data);
+
         toast.error(t("validation_error"), {
           description: response.data.message || "Erreur lors de la validation",
           duration: 5000,
         });
       }
     } catch (err: any) {
-      console.error("Erreur lors de la validation:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        config: err.config,
-      });
+
       const errorMessage =
         err.response?.data?.message ||
         err.response?.data?.error ||
@@ -954,35 +879,24 @@ const CollectionDetails = () => {
         level: userInfo?.role_id === 4 ? "1" : "2", // Niveau selon le rôle
       };
 
-      console.log(
-        `Rejecting collection ID: ${collection.id} with data:`,
-        requestData
-      );
-      console.log(
-        "URL de rejet:",
-        `/trade-flow/collections/${collection.id}/reject`
-      );
-      console.log("Raison du rejet:", rejectReason.trim());
+
 
       const response = await axiosInstance.post(
         `/trade-flow/collections/${collection.id}/reject`,
         requestData
       );
 
-      console.log("Réponse de rejet:", JSON.stringify(response.data, null, 2));
+
 
       if (response.data.success) {
         // Vérifier si c'est une resoumission
         const isResubmissionFlag =
           (response.data.result as any)?.is_resubmission === true;
-        console.log("=== DETECTION RESOUMISSION (REJECT) ===");
-        console.log("is_resubmission flag:", isResubmissionFlag);
-        console.log("response.data.result:", response.data.result);
-        console.log("=== FIN DETECTION RESOUMISSION (REJECT) ===");
+
 
         if (isResubmissionFlag) {
           setIsResubmission(true);
-          console.log("Flag isResubmission défini à true (reject)");
+
         }
 
         toast.success(t("collection_rejected"), {
@@ -991,7 +905,7 @@ const CollectionDetails = () => {
         });
 
         // Recharger les données de la collecte
-        console.log(`Reloading collection data for ID: ${collection.id}`);
+
         const collectionResponse = await axiosInstance.get(
           `/trade-flow/digitalized-collections/${collection.id}`
         );
@@ -1039,15 +953,7 @@ const CollectionDetails = () => {
               }
             }
           } catch (workflowErr: any) {
-            console.error(
-              "Erreur lors de la récupération du workflow après rejet:",
-              {
-                message: workflowErr.message,
-                response: workflowErr.response?.data,
-                status: workflowErr.response?.status,
-                statusText: workflowErr.response?.statusText,
-              }
-            );
+
           }
 
           setCollection(updatedCollection);
@@ -1056,20 +962,14 @@ const CollectionDetails = () => {
         setShowRejectDialog(false);
         setRejectReason("");
       } else {
-        console.error("Échec du rejet:", response.data);
+
         toast.error(t("rejection_error"), {
           description: response.data.message || "Erreur lors du rejet",
           duration: 5000,
         });
       }
     } catch (err: any) {
-      console.error("Erreur lors du rejet:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        config: err.config,
-      });
+
 
       const errorMessage =
         err.response?.data?.message ||
@@ -1103,20 +1003,14 @@ const CollectionDetails = () => {
         },
       };
 
-      console.log(
-        `Validating collection ID: ${collection.id} by supervisor with data:`,
-        requestData
-      );
+
 
       const response = await axiosInstance.post(
         `/trade-flow/collections/${collection.id}/validate/supervisor/complete`,
         requestData
       );
 
-      console.log(
-        "Supervisor validation response:",
-        JSON.stringify(response.data, null, 2)
-      );
+
 
       if (response.data.success) {
         toast.success(t("collection_validated"), {
@@ -1125,7 +1019,7 @@ const CollectionDetails = () => {
         });
 
         // Recharger les données de la collecte
-        console.log(`Reloading collection data for ID: ${collection.id}`);
+
         const collectionResponse = await axiosInstance.get(
           `/trade-flow/digitalized-collections/${collection.id}`
         );
@@ -1160,28 +1054,14 @@ const CollectionDetails = () => {
               }
             }
           } catch (workflowErr: any) {
-            console.error(
-              "Erreur lors de la récupération du workflow après validation superviseur:",
-              {
-                message: workflowErr.message,
-                response: workflowErr.response?.data,
-                status: workflowErr.response?.status,
-                statusText: workflowErr.response?.statusText,
-              }
-            );
+
           }
 
           setCollection(updatedCollection);
         }
       }
     } catch (err: any) {
-      console.error("Erreur lors de la validation superviseur:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        config: err.config,
-      });
+
 
       const errorMessage =
         err.response?.data?.message ||
@@ -1214,28 +1094,7 @@ const CollectionDetails = () => {
       collection?.status === "submitted" &&
       (!hasCurrentApprovedValidation || isResubmission);
 
-    console.log("=== DEBUG canValidate (RESOUMISSION) ===");
-    console.log("userInfo?.role_id === 4:", userInfo?.role_id === 4);
-    console.log(
-      "collection?.status === 'submitted':",
-      collection?.status === "submitted"
-    );
-    console.log("hasCurrentApprovedValidation:", hasCurrentApprovedValidation);
-    console.log("isResubmission:", isResubmission);
-    console.log(
-      "collection?.collectionValidations:",
-      collection?.collectionValidations
-    );
-    console.log(
-      "collection?.validated_by_team_manager:",
-      collection?.validated_by_team_manager
-    );
-    console.log(
-      "collection?.validation_result:",
-      collection?.validation_result
-    );
-    console.log("canValidate result:", result);
-    console.log("========================");
+
     return result;
   };
 
@@ -1248,13 +1107,7 @@ const CollectionDetails = () => {
       !collection?.collectionValidations ||
       collection.collectionValidations.length === 0
     ) {
-      console.log(
-        "=== DEBUG canSupervisorValidate: Pas de collectionValidations ==="
-      );
-      console.log(
-        "collection?.collectionValidations:",
-        collection?.collectionValidations
-      );
+
 
       // Fallback: utiliser les anciennes propriétés si collectionValidations n'est pas disponible
       const hasTeamManagerApproval = collection?.validated_by_team_manager;
@@ -1266,14 +1119,7 @@ const CollectionDetails = () => {
         hasTeamManagerApproval &&
         !hasCurrentSupervisorValidation;
 
-      console.log("=== FALLBACK LOGIC ===");
-      console.log("hasTeamManagerApproval (fallback):", hasTeamManagerApproval);
-      console.log(
-        "hasCurrentSupervisorValidation (fallback):",
-        hasCurrentSupervisorValidation
-      );
-      console.log("Résultat final (fallback):", result);
-      console.log("=== FIN FALLBACK LOGIC ===");
+
 
       return result;
     }
@@ -1304,47 +1150,9 @@ const CollectionDetails = () => {
       hasTeamManagerApproval &&
       (!hasCurrentSupervisorValidation || isResubmission);
 
-    console.log("=== DEBUG canSupervisorValidate (RESOUMISSION) ===");
-    console.log("userInfo?.role_id === 5:", userInfo?.role_id === 5);
-    console.log("hasTeamManagerApproval:", hasTeamManagerApproval);
-    console.log(
-      "hasCurrentSupervisorValidation:",
-      hasCurrentSupervisorValidation
-    );
-    console.log("isResubmission:", isResubmission);
-    console.log(
-      "collection?.collectionValidations:",
-      collection?.collectionValidations
-    );
 
-    // Debug détaillé des validations
-    if (collection?.collectionValidations) {
-      collection.collectionValidations.forEach(
-        (validation: any, index: number) => {
-          console.log(`Validation ${index}:`, {
-            validation_level: validation.validation_level,
-            validation_result: validation.validation_result,
-            is_current_validation: validation.is_current_validation,
-            validated_at: validation.validated_at,
-          });
-        }
-      );
-    }
 
-    console.log(
-      "collection?.validated_by_team_manager:",
-      collection?.validated_by_team_manager
-    );
-    console.log(
-      "collection?.validated_by_supervisor:",
-      collection?.validated_by_supervisor
-    );
-    console.log(
-      "collection?.supervisor_validation_result:",
-      collection?.supervisor_validation_result
-    );
-    console.log("Résultat final:", result);
-    console.log("=== FIN DEBUG canSupervisorValidate ===");
+
     return result;
   };
 
@@ -1405,10 +1213,7 @@ const CollectionDetails = () => {
               onClick={() => {
                 // Utiliser le chemin sauvegardé ou le chemin par défaut
                 const returnPath = location.state?.returnPath || "/create-user";
-                console.log("=== NAVIGATION RETOUR ===");
-                console.log("returnPath:", returnPath);
-                console.log("location.state:", location.state);
-                console.log("=== FIN NAVIGATION RETOUR ===");
+
                 navigate(returnPath);
               }}
             />
@@ -1603,10 +1408,10 @@ const CollectionDetails = () => {
                   <span className="font-bold">{t("collection_status")} :</span>
                   <span
                     className={`ml-2 px-2 py-1 rounded text-xs ${collection.status === "validated"
-                        ? "bg-green-100 text-green-800"
-                        : collection.status === "submitted"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
+                      ? "bg-green-100 text-green-800"
+                      : collection.status === "submitted"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-gray-100 text-gray-800"
                       }`}
                   >
                     {collection.status}
@@ -2634,10 +2439,10 @@ const CollectionDetails = () => {
                       </span>
                       <span
                         className={`ml-1 px-2 py-1 rounded text-xs ${validation.validation_result === "approved"
-                            ? "bg-green-100 text-green-800"
-                            : validation.validation_result === "rejected"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
+                          ? "bg-green-100 text-green-800"
+                          : validation.validation_result === "rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                           }`}
                       >
                         {validation.validation_result}
