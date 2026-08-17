@@ -39,6 +39,7 @@ import TransportsTable from "./pages/transport/TransportsTable.tsx";
 import AddEntity from "./pages/entity/AddEntity.tsx";
 import EntityListPage from "./pages/entity/EntityListPage.tsx";
 import CollectionDetails from "./pages/Collections/CollectionDetails.tsx";
+import CollectionsPage from "./pages/Collections/CollectionsPage.tsx";
 import AgriculturalCollectionsTables from "./pages/Tables/AgriculturalCollectionsTables.tsx";
 import PWAUpdatePrompt from "./components/pwa/PWAUpdatePrompt";
 import OfflineIndicator from "./components/pwa/OfflineIndicator";
@@ -91,6 +92,7 @@ export default function App() {
                     path="/create-user"
                     element={<AddUserFormElements />}
                   />
+                  <Route path="/collections" element={<CollectionsPage />} />
                   <Route
                     path="/collection/:id"
                     element={<CollectionDetails />}

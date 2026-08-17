@@ -3,11 +3,13 @@ import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { Link } from "react-router";
 import useAuth from "../../providers/auth/useAuth.ts";
+import { getRoleLabel } from "../../utils/roles";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   // @ts-ignore
   const { userInfo, userData, logout } = useAuth();
+  const roleLabel = getRoleLabel(userInfo?.role_id ?? userData?.role_id);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -27,8 +29,13 @@ export default function UserDropdown() {
           <img src="/images/placeholder.png" alt="User" />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">
-          {userData == undefined ? "..." : userData.username || "Utilisateur"}
+        <span className="mr-1 text-left">
+          <span className="block font-medium text-theme-sm">
+            {userData == undefined ? "..." : userData.username || "Utilisateur"}
+          </span>
+          <span className="block text-theme-xs text-gray-500 dark:text-gray-400">
+            {roleLabel}
+          </span>
         </span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -58,6 +65,9 @@ export default function UserDropdown() {
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
             {userData == undefined ? "..." : userData.username || "Utilisateur"}
+          </span>
+          <span className="mt-0.5 block text-theme-xs font-medium text-brand-500 dark:text-brand-400">
+            {roleLabel}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
             {userData == undefined

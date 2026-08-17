@@ -72,19 +72,9 @@ const AppSidebar: React.FC = () => {
     },
     {
       icon: <PencilIcon />,
-      name: t("livestock_collections"),
-      path: "/create-user",
+      name: t("all_collections"),
+      path: "/collections",
     },
-    {
-      icon: <PencilIcon />,
-      name: t("agricultural_collections"),
-      path: "/agricultural-collections",
-    },
-    // {
-    //   icon: <UserCircleIcon />,
-    //   name: t("role_management"),
-    //   path: "/role-managment",
-    // },
   ];
 
   const reportingItems: NavItem[] = [

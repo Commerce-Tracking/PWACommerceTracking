@@ -225,7 +225,7 @@ const UsersTableOne = () => {
           totalRecords={totalRecords}
           onPage={onPageChange}
           filterDisplay="row"
-          globalFilterFields={["name", "phone", "email"]}
+          globalFilterFields={["first_name", "last_name", "phone"]}
           emptyMessage={t("no_assigned_agents_found")}
           paginator
           rowsPerPageOptions={[5, 10, 25]}
@@ -238,20 +238,13 @@ const UsersTableOne = () => {
             body={(rowData) => `${rowData.first_name} ${rowData.last_name}`}
             filter
             filterPlaceholder={t("search_by_name")}
-            style={{ width: "25%" }}
+            style={{ width: "35%" }}
           />
           <Column
             field="phone"
             header={t("phone")}
             filter
             filterPlaceholder={t("search_by_phone")}
-            style={{ width: "20%" }}
-          />
-          <Column
-            field="email"
-            header={t("email")}
-            filter
-            filterPlaceholder={t("search_by_email")}
             style={{ width: "25%" }}
           />
           <Column
@@ -261,7 +254,7 @@ const UsersTableOne = () => {
             header={
               userInfo?.role_id === 5 ? t("validations") : t("collection")
             }
-            style={{ width: "15%" }}
+            style={{ width: "20%" }}
           />
           <Column
             header={t("actions")}

@@ -77,7 +77,8 @@ export default defineConfig(async () => {
       strictPort: false,
       proxy: {
         "/api": {
-          target: "https://gateway-api.dev.freetrade-ofr.com",
+          //target: "https://gateway-api.dev.freetrade-ofr.com",
+          target: "http://localhost:3005",
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, ""),

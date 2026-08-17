@@ -56,6 +56,7 @@
   "agent_collections": "Collectes des agents",
   "livestock_collections": "Collectes de bétail",
   "agricultural_collections": "Collectes végétales et halieutiques",
+  "all_collections": "Collectes",
   "validated_collections_by_team_managers": "Collectes validées par chefs d'équipe",
 
   "origin": "Origine",
@@ -339,6 +340,10 @@
   "animal_category_small": "Petit",
   "animal_category_medium": "Moyen",
   "animal_category_large": "Grand",
+  "animal_price_small": "Prix petit",
+  "animal_price_medium": "Prix moyen",
+  "animal_price_large": "Prix gros",
+  "animal_category_value": "Valeur",
 
   "animal_head_unit": "tête(s)",
   "animal_price_at": "à",

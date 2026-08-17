@@ -4,10 +4,12 @@ import { useTranslation } from "react-i18next";
 
 interface BreadcrumbProps {
   pageTitle: string;
+  /** Masque le titre H2 et allège le fil d'Ariane (pages avec header custom). */
+  subtle?: boolean;
 }
 
 
-const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
+const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, subtle = false }) => {
 
 const { t, i18n } = useTranslation();
 
@@ -19,18 +21,24 @@ const { t, i18n } = useTranslation();
 
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-      <h2
-        className="text-xl font-semibold text-gray-800 dark:text-white/90"
-        x-text="pageName"
-      >
-        {pageTitle}
-      </h2>
-      <nav>
+    <div
+      className={`flex flex-wrap items-center justify-between gap-3 ${
+        subtle ? "mb-3" : "mb-6"
+      }`}
+    >
+      {!subtle && (
+        <h2
+          className="text-xl font-semibold text-gray-800 dark:text-white/90"
+          x-text="pageName"
+        >
+          {pageTitle}
+        </h2>
+      )}
+      <nav className={subtle ? "w-full" : undefined}>
         <ol className="flex items-center gap-1.5">
           <li>
             <Link
-              className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400"
+              className="inline-flex items-center gap-1.5 text-xs text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               to="/"
             >
               {/* Accueil */}
@@ -53,7 +61,13 @@ const { t, i18n } = useTranslation();
               </svg>
             </Link>
           </li>
-          <li className="text-sm text-gray-800 dark:text-white/90">
+          <li
+            className={`text-xs ${
+              subtle
+                ? "text-gray-500 dark:text-gray-400"
+                : "text-sm text-gray-800 dark:text-white/90"
+            }`}
+          >
             {pageTitle}
           </li>
         </ol>

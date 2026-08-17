@@ -14,6 +14,8 @@ interface MonthlyData {
   details: {
     agricultural: { validated: number; rejected: number };
     livestock: { validated: number; rejected: number };
+    fishery: { validated: number; rejected: number };
+    mixed: { validated: number; rejected: number };
   };
 }
 
@@ -77,6 +79,8 @@ export default function MonthlySalesChart() {
         details: {
           agricultural: { validated: number; rejected: number };
           livestock: { validated: number; rejected: number };
+          fishery: { validated: number; rejected: number };
+          mixed: { validated: number; rejected: number };
         };
       }
     >();
@@ -88,6 +92,8 @@ export default function MonthlySalesChart() {
         details: {
           agricultural: { validated: 0, rejected: 0 },
           livestock: { validated: 0, rejected: 0 },
+          fishery: { validated: 0, rejected: 0 },
+          mixed: { validated: 0, rejected: 0 },
         },
       };
 
@@ -98,18 +104,12 @@ export default function MonthlySalesChart() {
         existing.rejected += item.count;
       }
 
-      // Mettre à jour les détails par type
-      if (item.type === "agricultural") {
+      const typeKey = item.type as keyof typeof existing.details;
+      if (typeKey in existing.details) {
         if (item.action === "validated") {
-          existing.details.agricultural.validated += item.count;
+          existing.details[typeKey].validated += item.count;
         } else if (item.action === "rejected") {
-          existing.details.agricultural.rejected += item.count;
-        }
-      } else if (item.type === "livestock") {
-        if (item.action === "validated") {
-          existing.details.livestock.validated += item.count;
-        } else if (item.action === "rejected") {
-          existing.details.livestock.rejected += item.count;
+          existing.details[typeKey].rejected += item.count;
         }
       }
 
@@ -127,6 +127,8 @@ export default function MonthlySalesChart() {
         details: {
           agricultural: { validated: 0, rejected: 0 },
           livestock: { validated: 0, rejected: 0 },
+          fishery: { validated: 0, rejected: 0 },
+          mixed: { validated: 0, rejected: 0 },
         },
       };
       return {
@@ -254,6 +256,10 @@ export default function MonthlySalesChart() {
             details.agricultural.validated + details.agricultural.rejected;
           const livestockTotal =
             details.livestock.validated + details.livestock.rejected;
+          const fisheryTotal =
+            details.fishery.validated + details.fishery.rejected;
+          const mixedTotal =
+            details.mixed.validated + details.mixed.rejected;
 
           let html = `
             <div style="padding: 10px; background: white; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -277,15 +283,27 @@ export default function MonthlySalesChart() {
                   Détails par type:
                 </div>
                 <div style="margin-bottom: 4px; font-size: 11px;">
-                  <span style="color: #6b7280;">🌾 Végétal/Halieutique:</span>
+                  <span style="color: #6b7280;">Agricole:</span>
                   <span style="color: #1b2e3b; font-weight: 600; margin-left: 4px;">
                     ${agriculturalTotal} (${details.agricultural.validated} validées, ${details.agricultural.rejected} rejetées)
                   </span>
                 </div>
-                <div style="font-size: 11px;">
-                  <span style="color: #6b7280;">🐄 Bétail:</span>
+                <div style="margin-bottom: 4px; font-size: 11px;">
+                  <span style="color: #6b7280;">Bétail:</span>
                   <span style="color: #1b2e3b; font-weight: 600; margin-left: 4px;">
                     ${livestockTotal} (${details.livestock.validated} validées, ${details.livestock.rejected} rejetées)
+                  </span>
+                </div>
+                <div style="margin-bottom: 4px; font-size: 11px;">
+                  <span style="color: #6b7280;">Halieutique:</span>
+                  <span style="color: #1b2e3b; font-weight: 600; margin-left: 4px;">
+                    ${fisheryTotal} (${details.fishery.validated} validées, ${details.fishery.rejected} rejetées)
+                  </span>
+                </div>
+                <div style="font-size: 11px;">
+                  <span style="color: #6b7280;">Mixte:</span>
+                  <span style="color: #1b2e3b; font-weight: 600; margin-left: 4px;">
+                    ${mixedTotal} (${details.mixed.validated} validées, ${details.mixed.rejected} rejetées)
                   </span>
                 </div>
               </div>

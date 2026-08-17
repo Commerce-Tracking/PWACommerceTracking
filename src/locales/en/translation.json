@@ -57,6 +57,7 @@
   "agent_collections": "Agent Collections",
   "livestock_collections": "Livestock Collections",
   "agricultural_collections": "Vegetable and fishery collections",
+  "all_collections": "Collections",
   "validated_collections_by_team_managers": "Collections Validated by Team Managers",
   "collection_details": "Collection Details",
   "collector": "Collector",
@@ -334,6 +335,10 @@
   "animal_category_small": "Small",
   "animal_category_medium": "Medium",
   "animal_category_large": "Large",
+  "animal_price_small": "Small price",
+  "animal_price_medium": "Medium price",
+  "animal_price_large": "Large price",
+  "animal_category_value": "Value",
 
   "animal_head_unit": "head(s)",
   "animal_price_at": "at",

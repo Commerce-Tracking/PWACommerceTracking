@@ -5,12 +5,26 @@ import { Toast } from "primereact/toast";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import axiosInstance from "../../../api/axios";
-import ComponentCard from "../../common/ComponentCard";
+import { Paginator } from "primereact/paginator";
 import "primeicons/primeicons.css";
 import "primereact/resources/themes/lara-light-cyan/theme.css";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import CollectionTypeBadge from "../../collections/CollectionTypeBadge";
+import CollectorCell from "../../collections/list/CollectorCell";
+import CollectionDateCell from "../../collections/list/CollectionDateCell";
+import CollectionListStats from "../../collections/list/CollectionListStats";
+import CollectionListStatusBadge, {
+  statusToneFromKey,
+} from "../../collections/list/CollectionListStatusBadge";
+import {
+  COLLECTION_TYPE_FILTER_OPTIONS,
+  getTradeFlowLabel,
+  isCollectionTypeFilter,
+  type CollectionTypeFilter,
+} from "../../../utils/collectionLabels";
+import { isSupervisor, isTeamManager } from "../../../utils/roles";
 
 interface Collection {
   id: number;
@@ -354,6 +368,9 @@ const CollectionsTableOne = () => {
   const [tableData, setTableData] = useState<Collection[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [countriesById, setCountriesById] = useState<
+    Record<string, { name: string; flag?: string }>
+  >({});
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -389,6 +406,39 @@ const CollectionsTableOne = () => {
   useEffect(() => {
     currentPageRef.current = currentPage;
   }, [currentPage]);
+
+  // Charger le référentiel pays pour résoudre origin_country_id / destination_country_id
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await axiosInstance.get("/admin/countries", {
+          params: { page: 1, limit: 500 },
+        });
+        // Formes possibles : data.data.data | data.data | result.data | result
+        const payload = response.data;
+        const raw =
+          payload?.data?.data ??
+          (Array.isArray(payload?.data) ? payload.data : null) ??
+          payload?.result?.data ??
+          payload?.result ??
+          [];
+        const list: any[] = Array.isArray(raw) ? raw : [];
+        const map: Record<string, { name: string; flag?: string }> = {};
+        list.forEach((country) => {
+          if (country?.id == null) return;
+          map[String(country.id)] = {
+            name: country.name || `Pays #${country.id}`,
+            flag: country.flag,
+          };
+        });
+        setCountriesById(map);
+      } catch (err) {
+        // Endpoint admin parfois inaccessible aux validateurs — fallback via relations/IDs
+        console.error("Erreur chargement pays:", err);
+      }
+    };
+    fetchCountries();
+  }, []);
 
   // Synchroniser currentPage avec l'URL et location.state (doit se déclencher en premier)
   useEffect(() => {
@@ -446,21 +496,48 @@ const CollectionsTableOne = () => {
   const [validationStatus, setValidationStatus] = useState<string>(getInitialValidationStatus);
   const toast = useRef<Toast>(null);
 
-  // Synchroniser validationStatus avec l'URL
+  const getInitialCollectionType = (): CollectionTypeFilter => {
+    const typeFromUrl = searchParams.get("collection_type");
+    if (isCollectionTypeFilter(typeFromUrl)) return typeFromUrl;
+    return "all";
+  };
+
+  const [collectionTypeFilter, setCollectionTypeFilter] =
+    useState<CollectionTypeFilter>(getInitialCollectionType);
+
+  // Synchroniser validationStatus et collection_type avec l'URL
   useEffect(() => {
     const statusFromUrl = searchParams.get("status") || "";
-
-
-
     if (statusFromUrl !== validationStatus) {
       setValidationStatus(statusFromUrl);
     }
 
-    // Se déclencher au montage et quand searchParams change
+    const typeFromUrl = searchParams.get("collection_type");
+    const nextType: CollectionTypeFilter = isCollectionTypeFilter(typeFromUrl)
+      ? typeFromUrl
+      : "all";
+    if (nextType !== collectionTypeFilter) {
+      setCollectionTypeFilter(nextType);
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
 
-  // Fonction pour récupérer les collectes de bétail
+  const buildListParams = () => {
+    const params: Record<string, string> = {
+      page: String(currentPage),
+      limit: String(rowsPerPage),
+    };
+    if (collectionTypeFilter !== "all") {
+      params.collection_type = collectionTypeFilter;
+    }
+    if (globalFilter) {
+      params.search = globalFilter;
+    }
+    return params;
+  };
+
+  // Liste unique des collectes (tous types par défaut)
   const fetchData = async () => {
     try {
       setIsLoading(true);
@@ -470,54 +547,36 @@ const CollectionsTableOne = () => {
 
       // Si un statut de validation est sélectionné, utiliser l'endpoint de filtrage approprié
       if (validationStatus) {
-        const searchParams: any = {
-          collection_type: "livestock",
-          page: String(currentPage),
-          limit: String(rowsPerPage),
-        };
+        const listParams: Record<string, string> = buildListParams();
 
-        // Ajouter la recherche globale
-        if (globalFilter) {
-          searchParams.search = globalFilter;
-        }
-
-        if (userInfo?.role_id === 4) {
+        if (isTeamManager(userInfo?.role_id)) {
           // Chef d'équipe : utiliser collection_status
-          searchParams.collection_status = validationStatus;
+          listParams.collection_status = validationStatus;
           response = await axiosInstance.get<ApiResponse>(
             "/trade-flow/collections/by-validation-status",
             {
-              params: searchParams,
+              params: listParams,
             }
           );
-        } else if (userInfo?.role_id === 5) {
+        } else if (isSupervisor(userInfo?.role_id)) {
           // Superviseur : utiliser validation_status et validation_level
-          searchParams.validation_status = validationStatus;
-          searchParams.validation_level = "2";
+          listParams.validation_status = validationStatus;
+          listParams.validation_level = "2";
           response = await axiosInstance.get<ApiResponse>(
             "/trade-flow/collections/by-validation-status",
             {
-              params: searchParams,
+              params: listParams,
             }
           );
         }
       } else {
         // Sinon, utiliser l'endpoint normal
-        const searchParams: any = {
-          page: String(currentPage),
-          limit: String(rowsPerPage),
-          collection_type: "livestock",
-        };
-
-        // Ajouter la recherche globale
-        if (globalFilter) {
-          searchParams.search = globalFilter;
-        }
+        const listParams = buildListParams();
 
         response = await axiosInstance.get<ApiResponse>(
           "/trade-flow/agents/collections",
           {
-            params: searchParams,
+            params: listParams,
           }
         );
       }
@@ -608,6 +667,9 @@ const CollectionsTableOne = () => {
                     workflowTeamManagerValidation?.validated_at,
                   team_manager_rejection_reason:
                     workflowTeamManagerValidation?.rejection_reason,
+                  team_manager_name: workflowTeamManagerValidation?.validator
+                    ? `${workflowTeamManagerValidation.validator.first_name || ""} ${workflowTeamManagerValidation.validator.last_name || ""}`.trim()
+                    : undefined,
                   // Informations de validation du superviseur
                   validated_by_supervisor:
                     supervisorValidation?.validation_result === "approved",
@@ -650,6 +712,9 @@ const CollectionsTableOne = () => {
                 teamManagerValidation?.validated_at || collection.validated_at,
               team_manager_rejection_reason:
                 teamManagerValidation?.rejection_reason,
+              team_manager_name: (teamManagerValidation as any)?.validator
+                ? `${(teamManagerValidation as any).validator.first_name || ""} ${(teamManagerValidation as any).validator.last_name || ""}`.trim()
+                : undefined,
               // Informations de validation du superviseur
               validated_by_supervisor:
                 supervisorValidation?.validation_result === "approved",
@@ -687,12 +752,38 @@ const CollectionsTableOne = () => {
             : "0.00",
         }));
 
+        // Enrichir le référentiel pays à partir des relations présentes dans la liste
+        // (utile si /admin/countries est inaccessible au rôle courant)
+        setCountriesById((prev) => {
+          const next = { ...prev };
+          const remember = (country: any) => {
+            if (country?.id == null || !country?.name) return;
+            next[String(country.id)] = {
+              name: country.name,
+              flag: country.flag,
+            };
+          };
+          transformedData.forEach((item: any) => {
+            remember(item.originCountry || item.origin_country);
+            remember(item.destinationCountry || item.destination_country);
+            item.collectionItems?.forEach((ci: any) => {
+              remember(ci.originCountry || ci.origin_country);
+              remember(ci.destinationCountry || ci.destination_country);
+              remember(ci.productOriginCountry || ci.product_origin_country);
+              remember(
+                ci.productDestinationCountry || ci.product_destination_country
+              );
+            });
+          });
+          return next;
+        });
+
         setTableData(transformedData);
       }
     } catch (err: any) {
 
       setError(
-        err.message || "Erreur lors de la récupération des collectes de bétail"
+        err.message || "Erreur lors de la récupération des collectes"
       );
     } finally {
       setIsLoading(false);
@@ -709,7 +800,14 @@ const CollectionsTableOne = () => {
 
 
     fetchData();
-  }, [currentPage, rowsPerPage, globalFilter, validationStatus, isInitialized]);
+  }, [
+    currentPage,
+    rowsPerPage,
+    globalFilter,
+    validationStatus,
+    collectionTypeFilter,
+    isInitialized,
+  ]);
 
   // Force le re-rendu quand la langue change
   useEffect(() => {
@@ -734,6 +832,9 @@ const CollectionsTableOne = () => {
     if (finalStatus) {
       newSearchParams.set("status", finalStatus);
     }
+    if (collectionTypeFilter !== "all") {
+      newSearchParams.set("collection_type", collectionTypeFilter);
+    }
     const returnPath = `${location.pathname}?${newSearchParams.toString()}`;
 
 
@@ -750,7 +851,15 @@ const CollectionsTableOne = () => {
         returnPath: returnPath,
       },
     });
-  }, [currentPage, validationStatus, searchParams, location.pathname, navigate, setSearchParams]);
+  }, [
+    currentPage,
+    validationStatus,
+    collectionTypeFilter,
+    searchParams,
+    location.pathname,
+    navigate,
+    setSearchParams,
+  ]);
 
   const onPageChange = (event: any) => {
 
@@ -787,53 +896,48 @@ const CollectionsTableOne = () => {
       return (
         <button
           onClick={() => handleViewDetails(rowData)}
-          className="px-3 py-1 text-sm text-white bg-green-600 rounded"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50 dark:border-gray-700 dark:bg-white/5 dark:text-gray-200 dark:hover:border-brand-500/40 dark:hover:bg-brand-500/10 dark:hover:text-brand-300"
           key={`${rowData.id}-${currentLang}`}
         >
+          <i className="pi pi-eye text-[11px]" aria-hidden />
           {t("view_details")}
         </button>
       );
     };
-  }, [i18n.language, t]);
+  }, [i18n.language, t, handleViewDetails]);
 
   const collectorBodyTemplate = (rowData: Collection) => {
-    return (
-      <div className="flex items-center">
-        <div className="flex-shrink-0 w-8 h-8">
-          <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
-              {rowData.collector_name?.charAt(0) || "?"}
-            </span>
-          </div>
-        </div>
-        <div className="ml-3">
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {rowData.collector_name || "Non spécifié"}
-          </div>
-        </div>
-      </div>
-    );
+    return <CollectorCell name={rowData.collector_name} />;
   };
 
   const dateBodyTemplate = (rowData: Collection) => {
-    return rowData.collection_date
-      ? new Date(rowData.collection_date).toLocaleDateString()
-      : new Date(rowData.created_at).toLocaleDateString();
-  };
-
-  const getCollectionTypeLabel = (type: string) => {
-    switch (type) {
-      case "livestock":
-        return "Bétail";
-      case "agricultural":
-        return "Agricole";
-      default:
-        return type;
-    }
+    return (
+      <CollectionDateCell
+        date={rowData.collection_date}
+        fallback={rowData.created_at}
+      />
+    );
   };
 
   const collectionTypeBodyTemplate = (rowData: Collection) => {
-    return getCollectionTypeLabel(rowData.collection_type);
+    return <CollectionTypeBadge type={rowData.collection_type} />;
+  };
+
+  const tradeFlowBodyTemplate = (rowData: Collection) => {
+    return (
+      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+        {getTradeFlowLabel(rowData.trade_flow_direction)}
+      </span>
+    );
+  };
+
+  const itemsCountBodyTemplate = (rowData: Collection) => {
+    const count = rowData.total_items ?? rowData.collectionItems?.length ?? 0;
+    return (
+      <span className="inline-flex min-w-[1.75rem] items-center justify-center rounded-lg bg-gray-50 px-2 py-1 text-sm font-semibold text-gray-800 dark:bg-white/5 dark:text-gray-200">
+        {count}
+      </span>
+    );
   };
 
   const showRejectionReason = (reason: string) => {
@@ -857,16 +961,21 @@ const CollectionsTableOne = () => {
     setSearchParams(newSearchParams, { replace: true });
   };
 
-  const statusBodyTemplate = (rowData: Collection) => {
-    const statusColors = {
-      submitted: "bg-yellow-100 text-yellow-800",
-      validated: "bg-green-100 text-green-800",
-      rejected: "bg-red-100 text-red-800",
-      draft: "bg-gray-100 text-gray-800",
-      approved: "bg-green-100 text-green-800",
-      pending: "bg-blue-100 text-blue-800",
-    };
+  const handleCollectionTypeChange = (type: CollectionTypeFilter) => {
+    setCollectionTypeFilter(type);
+    setCurrentPage(1);
 
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (type === "all") {
+      newSearchParams.delete("collection_type");
+    } else {
+      newSearchParams.set("collection_type", type);
+    }
+    newSearchParams.set("page", "1");
+    setSearchParams(newSearchParams, { replace: true });
+  };
+
+  const statusBodyTemplate = (rowData: Collection) => {
     // Pour le chef d'équipe, afficher le statut de validation après ses actions
     let displayStatus = rowData.status;
     let statusLabel = "Statut initial";
@@ -908,6 +1017,14 @@ const CollectionsTableOne = () => {
           displayStatus = "pending";
           statusLabel = "En attente de l'éditeur";
         }
+      } else if (
+        rowData.status === "rejected" ||
+        (rowData as any).team_manager_validation_result === "rejected"
+      ) {
+        displayStatus = "rejected";
+        statusLabel = (rowData as any).team_manager_name
+          ? `Rejetée par ${(rowData as any).team_manager_name}`
+          : "Rejetée par chef d'équipe";
       } else if (rowData.status === "validated") {
         // Collection validée par le chef d'équipe mais pas encore traitée par le superviseur
         displayStatus = "pending";
@@ -920,14 +1037,11 @@ const CollectionsTableOne = () => {
     }
 
     return (
-      <div className="flex flex-col gap-1">
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[displayStatus as keyof typeof statusColors] ||
-            "bg-gray-100 text-gray-800"
-            }`}
-        >
-          {statusLabel}
-        </span>
+      <div className="flex flex-col gap-1.5">
+        <CollectionListStatusBadge
+          tone={statusToneFromKey(displayStatus)}
+          label={statusLabel}
+        />
         {userInfo?.role_id === 4 &&
           ((rowData as any).team_manager_validation_result ||
             (rowData as any).validation_result) && (
@@ -956,7 +1070,7 @@ const CollectionsTableOne = () => {
                           (rowData as any).team_manager_rejection_reason!
                         )
                       }
-                      className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors duration-200"
+                      className="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
                     >
                       <i className="pi pi-eye mr-1"></i>
                       Voir motif
@@ -990,7 +1104,7 @@ const CollectionsTableOne = () => {
                             rowData.supervisor_rejection_reason!
                           )
                         }
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors duration-200"
+                        className="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
                       >
                         <i className="pi pi-eye mr-1"></i>
                         Voir motif
@@ -1002,7 +1116,11 @@ const CollectionsTableOne = () => {
               // Collection en attente du superviseur - afficher la date de validation du chef d'équipe
               <div>
                 <div>
-                  Validée par chef d'équipe le{" "}
+                  Validée
+                  {(rowData as any).team_manager_name
+                    ? ` par ${(rowData as any).team_manager_name}`
+                    : " par chef d'équipe"}{" "}
+                  le{" "}
                   {rowData.team_manager_validation_date
                     ? new Date(
                       rowData.team_manager_validation_date
@@ -1019,59 +1137,84 @@ const CollectionsTableOne = () => {
     );
   };
 
-  const originBodyTemplate = (rowData: Collection) => {
-    // Utiliser les nouvelles données structurées
-    let cityName = "Non spécifié";
-    let countryName = rowData.originCountry?.name || "Non spécifié";
-    let countryFlag = rowData.originCountry?.flag || "";
+  const asCountry = (
+    value: { name?: string | null; flag?: string | null } | null | undefined
+  ) => {
+    if (!value?.name) return null;
+    return { name: value.name, flag: value.flag || undefined };
+  };
 
-    // Essayer de récupérer le nom de la ville depuis les collectionItems
-    if (rowData.collectionItems && rowData.collectionItems.length > 0) {
-      const firstItem = rowData.collectionItems[0];
-      if (firstItem.loadingCity?.name) {
-        cityName = firstItem.loadingCity.name;
-      }
+  /** Résout un pays depuis la ligne (relations camel/snake + items + référentiel). */
+  const resolveCountryFromRow = (
+    rowData: Collection,
+    kind: "origin" | "destination"
+  ) => {
+    const row = rowData as any;
+    const firstItem = row.collectionItems?.[0];
+    const countryId =
+      kind === "origin"
+        ? rowData.origin_country_id ?? firstItem?.origin_country_id
+        : rowData.destination_country_id;
+
+    const nestedCandidates =
+      kind === "origin"
+        ? [
+            rowData.originCountry,
+            row.origin_country,
+            firstItem?.originCountry,
+            firstItem?.origin_country,
+            firstItem?.productOriginCountry,
+            firstItem?.product_origin_country,
+          ]
+        : [
+            rowData.destinationCountry,
+            row.destination_country,
+            firstItem?.destinationCountry,
+            firstItem?.destination_country,
+            firstItem?.productDestinationCountry,
+            firstItem?.product_destination_country,
+          ];
+
+    for (const candidate of nestedCandidates) {
+      const resolved = asCountry(candidate);
+      if (resolved) return resolved;
     }
 
-    // Fallback sur les anciens champs si les nouveaux ne sont pas disponibles
-    if (cityName === "Non spécifié" && rowData.origin_city_id) {
-      cityName = `Ville ID: ${rowData.origin_city_id}`;
+    if (countryId != null && countriesById[String(countryId)]) {
+      return countriesById[String(countryId)];
     }
 
+    // Dernier recours : afficher l'ID plutôt que « Non renseigné » silencieux
+    if (countryId != null) {
+      return { name: `Pays #${countryId}` };
+    }
+
+    return null;
+  };
+
+  const loadingCountryBodyTemplate = (rowData: Collection) => {
+    const country = resolveCountryFromRow(rowData, "origin");
+    if (!country) {
+      return <span className="text-sm text-gray-400">Non renseigné</span>;
+    }
     return (
-      <div className="text-sm">
-        <div className="font-medium">
-          {cityName} ({countryFlag} {countryName})
-        </div>
-      </div>
+      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+        {country.flag ? `${country.flag} ` : ""}
+        {country.name}
+      </span>
     );
   };
 
-  const destinationBodyTemplate = (rowData: Collection) => {
-    // Utiliser les nouvelles données structurées
-    let cityName = "Non spécifié";
-    let countryName = rowData.destinationCountry?.name || "Non spécifié";
-    let countryFlag = rowData.destinationCountry?.flag || "";
-
-    // Essayer de récupérer le nom de la ville depuis les collectionItems
-    if (rowData.collectionItems && rowData.collectionItems.length > 0) {
-      const firstItem = rowData.collectionItems[0];
-      if (firstItem.unloadingCity?.name) {
-        cityName = firstItem.unloadingCity.name;
-      }
+  const unloadingCountryBodyTemplate = (rowData: Collection) => {
+    const country = resolveCountryFromRow(rowData, "destination");
+    if (!country) {
+      return <span className="text-sm text-gray-400">Non renseigné</span>;
     }
-
-    // Fallback sur les anciens champs si les nouveaux ne sont pas disponibles
-    if (cityName === "Non spécifié" && rowData.final_destination_city_id) {
-      cityName = `Ville ID: ${rowData.final_destination_city_id}`;
-    }
-
     return (
-      <div className="text-sm">
-        <div className="font-medium">
-          {cityName} ({countryFlag} {countryName})
-        </div>
-      </div>
+      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+        {country.flag ? `${country.flag} ` : ""}
+        {country.name}
+      </span>
     );
   };
 
@@ -1101,65 +1244,188 @@ const CollectionsTableOne = () => {
   };
 
   if (isLoading) {
-    return <div>Chargement...</div>;
-  }
-
-  if (error) {
     return (
-      <div className="p-4 text-center">
-        <div className="mb-4">
-          <p className="text-red-600 dark:text-red-400 mb-2">
-            Erreur : {error}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-green-700 text-white rounded transition-colors"
-          >
-            Réessayer
-          </button>
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-brand-500" />
+          <p className="mt-4 text-sm text-gray-500">Chargement...</p>
         </div>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
+        <p className="mb-4 text-sm text-red-600 dark:text-red-400">
+          Erreur : {error}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
+  // KPI dérivés des données déjà chargées (page courante + totalRecords)
+  let pendingOnPage = 0;
+  let validatedOnPage = 0;
+  let rejectedOnPage = 0;
+  let itemsOnPage = 0;
+  for (const row of tableData) {
+    itemsOnPage += row.total_items ?? row.collectionItems?.length ?? 0;
+    if (userInfo?.role_id === 5) {
+      const hasSupervisorValidation =
+        row.supervisor_validation_result !== undefined &&
+        row.supervisor_validation_result !== null;
+      if (hasSupervisorValidation) {
+        if (row.supervisor_validation_result === "approved") validatedOnPage += 1;
+        else if (row.supervisor_validation_result === "rejected")
+          rejectedOnPage += 1;
+        else pendingOnPage += 1;
+      } else if (
+        row.status === "rejected" ||
+        (row as any).team_manager_validation_result === "rejected"
+      ) {
+        rejectedOnPage += 1;
+      } else {
+        pendingOnPage += 1;
+      }
+    } else if (row.status === "validated") {
+      validatedOnPage += 1;
+    } else if (row.status === "rejected") {
+      rejectedOnPage += 1;
+    } else {
+      pendingOnPage += 1;
+    }
+  }
+
+  const filterSelectClass =
+    "w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-800 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-400/30 dark:border-gray-700 dark:bg-gray-900 dark:text-white";
 
   return (
-    <div className="p-4">
-      <ComponentCard title={t("livestock_collections")}>
-        {/* Filtre de statut de validation pour le chef d'équipe et le superviseur */}
-        {(userInfo?.role_id === 4 || userInfo?.role_id === 5) && (
-          <div className="mb-4 flex flex-wrap gap-4">
-            <div className="flex flex-col">
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                Statut de validation
-              </label>
-              <select
-                value={validationStatus}
-                onChange={(e) => handleValidationStatusChange(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                key={`validation-status-${validationStatus}`}
-              >
-                <option value="">Tous les statuts</option>
-                {userInfo?.role_id === 4 ? (
-                  // Options pour le chef d'équipe
-                  <>
-                    <option value="submitted">En attente</option>
-                    <option value="validated">Validée</option>
-                    <option value="rejected">Rejetée</option>
-                  </>
-                ) : (
-                  // Options pour le superviseur
-                  <>
-                    <option value="pending">En attente</option>
-                    <option value="approved">Validée</option>
-                    <option value="rejected">Rejetée</option>
-                  </>
-                )}
-              </select>
+    <div className="space-y-5">
+      <CollectionListStats
+        items={[
+          {
+            label: "Total des collectes",
+            value: totalRecords,
+            icon: "pi-database",
+            tone: "info",
+          },
+          {
+            label: "En attente",
+            value: pendingOnPage,
+            icon: "pi-clock",
+            tone: "warning",
+          },
+          {
+            label: "Validées",
+            value: validatedOnPage,
+            icon: "pi-check-circle",
+            tone: "success",
+          },
+          {
+            label: "Rejetées",
+            value: rejectedOnPage,
+            icon: "pi-times-circle",
+            tone: "error",
+          },
+          {
+            label: "Articles collectés",
+            value: itemsOnPage,
+            icon: "pi-box",
+            tone: "default",
+          },
+        ]}
+      />
+
+      {(isTeamManager(userInfo?.role_id) ||
+        isSupervisor(userInfo?.role_id)) && (
+        <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm sm:p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+          <div className="mb-4 flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50 text-gray-500 dark:bg-white/5 dark:text-gray-400">
+              <i className="pi pi-filter text-sm" aria-hidden />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                Filtres
+              </h2>
+              <p className="text-xs text-gray-500">
+                Affinez la liste des collectes
+              </p>
             </div>
           </div>
-        )}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="collection-type-filter"
+                className="text-xs font-medium uppercase tracking-wide text-gray-500"
+              >
+                Type de collecte
+              </label>
+              <div className="relative">
+                <i className="pi pi-tags absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-gray-400" aria-hidden />
+                <select
+                  id="collection-type-filter"
+                  value={collectionTypeFilter}
+                  onChange={(e) =>
+                    handleCollectionTypeChange(
+                      e.target.value as CollectionTypeFilter
+                    )
+                  }
+                  className={filterSelectClass}
+                >
+                  {COLLECTION_TYPE_FILTER_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="validation-status-filter"
+                className="text-xs font-medium uppercase tracking-wide text-gray-500"
+              >
+                Statut de validation
+              </label>
+              <div className="relative">
+                <i className="pi pi-verified absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-gray-400" aria-hidden />
+                <select
+                  id="validation-status-filter"
+                  value={validationStatus}
+                  onChange={(e) => handleValidationStatusChange(e.target.value)}
+                  className={filterSelectClass}
+                  key={`validation-status-${validationStatus}`}
+                >
+                  <option value="">Tous les statuts</option>
+                  {isTeamManager(userInfo?.role_id) ? (
+                    <>
+                      <option value="submitted">En attente</option>
+                      <option value="validated">Validée</option>
+                      <option value="rejected">Rejetée</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="pending">En attente</option>
+                      <option value="approved">Validée</option>
+                      <option value="rejected">Rejetée</option>
+                    </>
+                  )}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop / tablette : tableau */}
+      <div className="collections-modern-table hidden md:block">
         <DataTable
           key={`datatable-${i18n.language}`}
           value={tableData}
@@ -1182,64 +1448,165 @@ const CollectionsTableOne = () => {
             "collectionPoint.name",
             "transportMode.name",
             "corridor.name",
-            ...(userInfo?.role_id === 5
+            "public_id",
+            "vehicle_registration_number",
+            ...(isSupervisor(userInfo?.role_id)
               ? ["validation_notes", "data_quality_score"]
               : []),
           ]}
-          emptyMessage="Aucune collecte de bétail trouvée."
+          emptyMessage="Aucune collecte trouvée."
           paginator
           rowsPerPageOptions={[5, 10, 25]}
           tableStyle={{ minWidth: "50rem" }}
           className="p-datatable-sm"
           lazy={true}
+          rowHover
         >
           <Column
             field="collector_name"
             header={t("collector")}
             filter
             filterPlaceholder="Rechercher par collecteur"
-            style={{ width: "22%" }}
+            style={{ width: "14%" }}
             body={collectorBodyTemplate}
           />
           <Column
             field="collection_type"
             header={t("collection_type")}
-            filter
-            filterPlaceholder="Rechercher par type"
-            style={{ width: "18%" }}
+            style={{ width: "10%" }}
             body={collectionTypeBodyTemplate}
           />
           <Column
-            field="total_value"
-            header="Valeur Totale"
-            sortable
-            filter
-            filterPlaceholder="Filtrer par valeur"
-            style={{ width: "13%" }}
-            body={totalValueBodyTemplate}
+            field="trade_flow_direction"
+            header="Sens du flux"
+            style={{ width: "10%" }}
+            body={tradeFlowBodyTemplate}
+          />
+          <Column
+            field="origin_country_id"
+            header={t("loading_country")}
+            style={{ width: "12%" }}
+            body={loadingCountryBodyTemplate}
+          />
+          <Column
+            field="destination_country_id"
+            header={t("unloading_country")}
+            style={{ width: "12%" }}
+            body={unloadingCountryBodyTemplate}
+          />
+          <Column
+            field="total_items"
+            header="Items"
+            style={{ width: "6%" }}
+            body={itemsCountBodyTemplate}
           />
           <Column
             field="created_at"
             header={t("date")}
-            style={{ width: "12%" }}
+            style={{ width: "9%" }}
             body={dateBodyTemplate}
           />
           <Column
             field="status"
             header="Statut de Validation"
-            style={{ width: "15%" }}
+            style={{ width: "12%" }}
             body={statusBodyTemplate}
           />
           <Column
             header={t("actions")}
             body={actionBodyTemplate}
-            style={{ width: "10%" }}
+            style={{ width: "8%" }}
           />
         </DataTable>
-      </ComponentCard>
+      </div>
+
+      {/* Mobile : cartes */}
+      <div className="space-y-3 md:hidden">
+        {tableData.length === 0 ? (
+          <div className="rounded-2xl border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
+            Aucune collecte trouvée.
+          </div>
+        ) : (
+          tableData.map((row) => (
+            <article
+              key={row.id}
+              className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm transition-colors dark:border-gray-800 dark:bg-white/[0.03]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <CollectorCell name={row.collector_name} />
+                <div>{statusBodyTemplate(row)}</div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                    Type
+                  </p>
+                  <div className="mt-1">
+                    <CollectionTypeBadge type={row.collection_type} />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                    Flux
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {getTradeFlowLabel(row.trade_flow_direction)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                    {t("loading_country")}
+                  </p>
+                  <div className="mt-1">
+                    {loadingCountryBodyTemplate(row)}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                    {t("unloading_country")}
+                  </p>
+                  <div className="mt-1">
+                    {unloadingCountryBodyTemplate(row)}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                    Items
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {itemsCountBodyTemplate(row)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+                    {t("date")}
+                  </p>
+                  <div className="mt-1">{dateBodyTemplate(row)}</div>
+                </div>
+              </div>
+
+              <div className="mt-4 border-t border-gray-100 pt-3 dark:border-gray-800">
+                {actionBodyTemplate(row)}
+              </div>
+            </article>
+          ))
+        )}
+
+        <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
+          <Paginator
+            first={(currentPage - 1) * rowsPerPage}
+            rows={rowsPerPage}
+            totalRecords={totalRecords}
+            rowsPerPageOptions={[5, 10, 25]}
+            onPageChange={onPageChange}
+            template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          />
+        </div>
+      </div>
+
       <Toast ref={toast} position="bottom-right" />
 
-      {/* Modal pour afficher la raison de rejet */}
       <Dialog
         header="Motif de rejet"
         visible={showRejectionModal}
@@ -1255,7 +1622,7 @@ const CollectionsTableOne = () => {
               color: "white",
             }}
             onClick={() => setShowRejectionModal(false)}
-            className="w-full sm:w-auto text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
+            className="w-full rounded-xl text-sm sm:w-auto sm:text-base px-3 py-2 sm:px-4 sm:py-3"
           />
         }
       >

@@ -954,3 +954,51 @@ span.flatpickr-weekday,
   align-items: center;
   gap: 0.5rem;
 }
+
+/* Collections list — DataTable SaaS style */
+.collections-modern-table {
+  @apply overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm dark:border-gray-800 dark:bg-white/[0.03];
+}
+
+.collections-modern-table .p-datatable-wrapper {
+  @apply overflow-auto;
+  max-height: min(70vh, 720px);
+}
+
+.collections-modern-table .p-datatable-thead > tr > th {
+  @apply sticky top-0 z-10 border-b border-gray-100 bg-gray-50/95 px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/95 dark:text-gray-400;
+}
+
+.collections-modern-table .p-datatable-tbody > tr {
+  @apply transition-colors duration-150;
+}
+
+.collections-modern-table .p-datatable-tbody > tr > td {
+  @apply border-b border-gray-100 px-4 py-3.5 align-middle text-sm text-gray-700 dark:border-gray-800 dark:text-gray-300;
+}
+
+.collections-modern-table .p-datatable-tbody > tr:hover {
+  @apply bg-gray-50/80 dark:bg-white/[0.04];
+}
+
+.collections-modern-table .p-datatable-tbody > tr:last-child > td {
+  @apply border-b-0;
+}
+
+.collections-modern-table .p-datatable.p-datatable-gridlines .p-datatable-thead > tr > th,
+.collections-modern-table .p-datatable.p-datatable-gridlines .p-datatable-tbody > tr > td {
+  border-width: 0;
+  border-bottom-width: 1px;
+}
+
+.collections-modern-table .p-paginator {
+  @apply border-t border-gray-100 bg-white px-3 py-3 dark:border-gray-800 dark:bg-transparent;
+}
+
+.collections-modern-table .p-paginator .p-paginator-page.p-highlight {
+  @apply rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300;
+}
+
+.collections-modern-table .p-datatable-emptymessage > td {
+  @apply px-4 py-10 text-center text-sm text-gray-500;
+}

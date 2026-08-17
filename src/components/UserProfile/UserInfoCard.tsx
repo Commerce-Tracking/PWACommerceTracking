@@ -5,6 +5,7 @@ import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import useAuth from "../../providers/auth/useAuth.ts";
 import { useTranslation } from "react-i18next";
+import { getRoleLabel } from "../../utils/roles";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
@@ -110,11 +111,7 @@ export default function UserInfoCard() {
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                 {userData == undefined
                   ? "..."
-                  : userData.role_id === 4
-                    ? "Chef d'équipe"
-                    : userData.role_id === 5
-                      ? "Superviseur"
-                      : `Rôle ${userData.role_id}`}
+                  : getRoleLabel(userData.role_id)}
               </p>
             </div>
 
