@@ -268,7 +268,7 @@ export default function MonthlySalesChart() {
               </div>
               <div style="margin-bottom: 6px;">
                 <span style="color: #1A6C30; font-weight: 600;">${series[0][dataPointIndex]}</span> 
-                <span style="color: #6b7280; margin-left: 4px;">${t("submitted_collections") || "Collectes soumises"}</span>
+                <span style="color: #6b7280; margin-left: 4px;">${t("processed_collections") || "Collectes traitées"}</span>
               </div>
               <div style="margin-bottom: 6px;">
                 <span style="color: #FFC200; font-weight: 600;">${series[1][dataPointIndex]}</span> 
@@ -317,7 +317,7 @@ export default function MonthlySalesChart() {
 
   const series = [
     {
-      name: t("submitted_collections") || "Collectes soumises",
+      name: t("processed_collections") || "Collectes traitées",
       data: monthlyData.map((data) => data.submitted),
     },
     {
@@ -349,7 +349,7 @@ export default function MonthlySalesChart() {
               {t("monthly_collections") || "Collectes mensuelles"}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t("monthly_collections_description") || "Évolution mensuelle des collectes"}
+              {t("monthly_collections_description") || "Vos décisions (validées et rejetées)"}
             </p>
           </div>
         </div>
@@ -370,7 +370,7 @@ export default function MonthlySalesChart() {
             {t("monthly_collections") || "Collectes mensuelles"}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t("monthly_collections_description") || "Évolution mensuelle des collectes"}
+            {t("monthly_collections_description") || "Vos décisions (validées et rejetées)"}
           </p>
         </div>
       </div>

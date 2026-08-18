@@ -49,6 +49,9 @@ export default function CollectionTypeDistributionChart() {
             other: 0,
           };
           (res.data.result as ApiStatItem[]).forEach((item) => {
+            if (item.action !== "validated" && item.action !== "rejected") {
+              return;
+            }
             const n = Number(item.count) || 0;
             if (item.type === "agricultural") next.agricultural += n;
             else if (item.type === "livestock") next.livestock += n;
@@ -138,7 +141,7 @@ export default function CollectionTypeDistributionChart() {
           Répartition par type de collecte
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Validées et rejetées (stats utilisateur)
+          Vos décisions courantes (validées et rejetées)
         </p>
       </div>
       {!hasData ? (

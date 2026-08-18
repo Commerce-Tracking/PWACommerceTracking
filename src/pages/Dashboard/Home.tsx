@@ -3,6 +3,7 @@ import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
 import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
 import CollectionTypeDistributionChart from "../../components/ecommerce/CollectionTypeDistributionChart";
 import CollectionQualityMetrics from "../../components/ecommerce/CollectionQualityMetrics";
+import SupervisorTeamBreakdown from "../../components/ecommerce/SupervisorTeamBreakdown";
 import PageMeta from "../../components/common/PageMeta";
 import useAuth from "../../providers/auth/useAuth.ts";
 import { useEffect } from "react";
@@ -36,6 +37,10 @@ export default function Home() {
 
         <div className="col-span-12 xl:col-span-7">
           <EcommerceMetrics />
+        </div>
+
+        <div className="col-span-12">
+          <SupervisorTeamBreakdown />
         </div>
 
         <div className="col-span-12 xl:col-span-7">

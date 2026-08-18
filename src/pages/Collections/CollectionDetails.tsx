@@ -20,6 +20,7 @@ import {
   getCollectionContextLabel,
   getTradeFlowLabel,
   NOT_SPECIFIED,
+  shouldShowLocalUnitWeightKg,
 } from "../../utils/collectionLabels";
 import YesNoValue from "../../components/collections/YesNoValue";
 import CountryValue from "../../components/collections/CountryValue";
@@ -1734,6 +1735,16 @@ const CollectionDetails = () => {
                         <InfoField label={t("total_weight")}>
                           {item.total_weight_kg} kg
                         </InfoField>
+                        {shouldShowLocalUnitWeightKg(
+                          collection.collection_type,
+                          item
+                        ) && (
+                          <InfoField label={t("local_unit_weight")}>
+                            {item.local_unit_weight_kg
+                              ? `${item.local_unit_weight_kg} kg`
+                              : NOT_SPECIFIED}
+                          </InfoField>
+                        )}
                         <InfoField label={t("customs_registration")}>
                           <YesNoValue value={item.is_customs_registered} />
                         </InfoField>
@@ -1826,7 +1837,11 @@ const CollectionDetails = () => {
                             {item.animal_gender}
                           </InfoField>
                         )}
-                        {item.average_weight_kg && (
+                        {item.average_weight_kg &&
+                          !shouldShowLocalUnitWeightKg(
+                            collection.collection_type,
+                            item
+                          ) && (
                           <InfoField label={t("average_weight")}>
                             {item.average_weight_kg} kg
                           </InfoField>

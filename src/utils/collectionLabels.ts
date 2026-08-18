@@ -163,3 +163,18 @@ export function isCollectionTypeFilter(
     value === "mixed"
   );
 }
+
+/** Produit végétal / halieutique (hors bétail) : afficher local_unit_weight_kg */
+export function shouldShowLocalUnitWeightKg(
+  collectionType: string | null | undefined,
+  item?: { product?: unknown; animal?: unknown; animal_id?: number | null }
+): boolean {
+  if (collectionType === "agricultural" || collectionType === "fishery") {
+    return true;
+  }
+  if (collectionType === "mixed") {
+    const hasAnimal = Boolean(item?.animal || item?.animal_id);
+    return Boolean(item?.product) && !hasAnimal;
+  }
+  return false;
+}
